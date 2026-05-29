@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EM Algorithm — Interactive Explainer</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet" />
+    <style>
+                :root {
+            --bg: #fbf8f0; /* Warm parchment paper */
+            --bg2: linear-gradient(135deg, rgba(255, 255, 255, 0.74), rgba(246, 240, 226, 0.5)), #fbf7ee; /* Clean gradient card */
+            --bg3: #ede4d2; /* Slightly darker parchment */
+            --border: #d7d4c9; /* var(--rule) */
+            --border-hi: #183653; /* Accent blue */
+            --text: #121212; /* Dark ink */
+            --muted: #4f5963; /* Muted slate */
+            --muted2: #2a3035; /* Dark muted */
+            --accent-a: #183653; /* Deep blue accent */
+            --accent-b: #16805d; /* Dark emerald green */
+            --accent-c: #c74a26; /* Warm rust orange */
+            --accent-d: #7c3aed; /* Deep purple */
+            --accent-e: #b8860b; /* Golden mustard */
+            --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            --serif: Georgia, 'Times New Roman', Times, serif;
+            --sans: Inter, ui-sans-serif, system-ui, sans-serif;
+            --radius: 8px;
+            --radius-sm: 4px;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 15px;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        /* ── HEADER ── */
+        .hero {
+            padding: 3rem 2rem 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .hero-label {
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: .12em;
+            color: var(--accent-a);
+            text-transform: uppercase;
+            margin-bottom: .6rem;
+        }
+
+        .hero h1 {
+            font-family: var(--serif);
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 400;
+            line-height: 1.15;
+            color: var(--text);
+            margin-bottom: .8rem;
+        }
+
+        .hero h1 em {
+            font-style: italic;
+            color: var(--accent-b);
+        }
+
+        .hero p {
+            color: var(--muted2);
+            font-size: 15px;
+            max-width: 560px;
+        }
+
+        /* ── NAV ── */
+        .nav-strip {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(251, 248, 240, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .nav-strip::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-btn {
+            flex-shrink: 0;
+            padding: 14px 20px;
+            font-family: var(--mono);
+            font-size: 11.5px;
+            letter-spacing: .04em;
+            color: var(--muted);
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: color .2s, border-color .2s;
+            white-space: nowrap;
+        }
+
+        .nav-btn:hover {
+            color: var(--text);
+        }
+
+        .nav-btn.active {
+            color: var(--accent-a);
+            border-bottom-color: var(--accent-a);
+        }
+
+        /* ── MAIN LAYOUT ── */
+        .main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        /* ── SECTIONS ── */
+        .section {
+            display: none;
+            padding: 2.5rem 0;
+            animation: fadeIn .3s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .section-num {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: .1em;
+            margin-bottom: .4rem;
+        }
+
+        .section-title {
+            font-family: var(--serif);
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: 400;
+            margin-bottom: .5rem;
+            line-height: 1.2;
+        }
+
+        .section-title .highlight {
+            color: var(--accent-b);
+            font-style: italic;
+        }
+
+        .def-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent-a);
+            border-radius: var(--radius-sm);
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+            font-size: 14px;
+            color: var(--muted2);
+            line-height: 1.75;
+        }
+
+        .def-card strong {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        /* ── DEMO CARD ── */
+        .demo-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-top: 1.5rem;
+        }
+
+        .demo-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: .9rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg3);
+        }
+
+        .demo-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .demo-title {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--muted2);
+            margin-left: 4px;
+        }
+
+        .demo-body {
+            padding: 1.5rem;
+        }
+
+        /* ── CONTROLS ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            border-radius: var(--radius-sm);
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border-hi);
+            background: var(--bg3);
+            color: var(--text);
+            transition: all .15s;
+            letter-spacing: .02em;
+        }
+
+        .btn:hover {
+            background: rgba(24, 54, 83, 0.05);
+            border-color: rgba(24, 54, 83, 0.18);
+        }
+
+        .btn:active {
+            transform: scale(.97);
+        }
+
+        .btn-primary {
+            background: var(--accent-a);
+            border-color: var(--accent-a);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #10253b; border-color: var(--accent-a);
+        }
+
+        .btn-success {
+            background: var(--accent-b);
+            border-color: var(--accent-b);
+            color: #ffffff;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: .75rem;
+            font-size: 13px;
+            color: var(--muted2);
+        }
+
+        .slider-row label {
+            min-width: 80px;
+            font-family: var(--mono);
+            font-size: 12px;
+        }
+
+        .slider-row input[type=range] {
+            flex: 1;
+            appearance: none;
+            height: 3px;
+            background: var(--border-hi);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .slider-row input[type=range]::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-a);
+            cursor: pointer;
+        }
+
+        .slider-row .val {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--accent-a);
+            min-width: 44px;
+            text-align: right;
+        }
+
+        /* ── STATS ROW ── */
+        .stats-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .stat-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--bg3);
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--muted2);
+        }
+
+        .stat-chip .val {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .explain-box {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: .85rem 1.1rem;
+            margin-top: 1rem;
+            font-size: 13px;
+            color: var(--muted2);
+            line-height: 1.7;
+        }
+
+        .explain-box .tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            margin-right: 6px;
+        }
+
+        .tag-e {
+            background: rgba(24, 54, 83, 0.12);
+            color: var(--accent-a);
+        }
+
+        .tag-m {
+            background: rgba(22, 128, 93, 0.12);
+            color: var(--accent-b);
+        }
+
+        .tag-c {
+            background: rgba(199, 74, 38, 0.12);
+            color: var(--accent-c);
+        }
+
+        .tag-j {
+            background: rgba(124, 58, 237, 0.12);
+            color: var(--accent-d);
+        }
+
+        canvas {
+            display: block;
+            width: 100% !important;
+        }
+
+        /* ── COIN FLIP ── */
+        .coin-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        @media (max-width: 560px) {
+            .coin-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .coin-setup-label {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            margin-bottom: .6rem;
+        }
+
+        .coin-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+        }
+
+        .coin-flips-area {
+            min-height: 60px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .flip-coin {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 600;
+            border: 1.5px solid;
+            transition: all .3s;
+            animation: coinPop .25s ease both;
+        }
+
+        @keyframes coinPop {
+            from {
+                transform: scale(0) rotateY(90deg);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1) rotateY(0deg);
+                opacity: 1;
+            }
+        }
+
+        .flip-H {
+            background: rgba(24, 54, 83, 0.08);
+            border-color: var(--accent-a);
+            color: var(--accent-a);
+        }
+
+        .flip-T {
+            background: rgba(184, 134, 11, 0.08);
+            border-color: var(--accent-e);
+            color: var(--accent-e);
+        }
+
+        .flip-unknown {
+            background: rgba(24, 54, 83, 0.04);
+            border-color: var(--border-hi);
+            color: var(--muted);
+        }
+
+        .result-reveal {
+            margin-top: 1.25rem;
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg3);
+            display: none;
+        }
+
+        .result-reveal.show {
+            display: block;
+            animation: fadeIn .3s ease;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .75rem;
+            margin-top: .75rem;
+        }
+
+        .result-item {
+            font-family: var(--mono);
+            font-size: 12px;
+        }
+
+        .result-item .k {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .result-item .v {
+            color: var(--text);
+            font-size: 15px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .correct {
+            color: var(--accent-b) !important;
+        }
+
+        .wrong {
+            color: var(--accent-c) !important;
+        }
+
+        /* ── HEIGHT SCATTER ── */
+        .canvas-wrap {
+            position: relative;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        /* ── PROB PILLS ── */
+        .prob-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: .75rem;
+            font-size: 13px;
+        }
+
+        .prob-table th {
+            text-align: left;
+            padding: 6px 10px;
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .prob-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid rgba(24, 54, 83, 0.06);
+        }
+
+        .prob-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .prob-bar-bg {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            overflow: hidden;
+        }
+
+        .prob-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width .5s ease;
+        }
+
+        /* ── JENSEN ── */
+        .jensen-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 560px) {
+            .jensen-info {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .jensen-stat {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: .75rem 1rem;
+            text-align: center;
+        }
+
+        .jensen-stat .jk {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
+
+        .jensen-stat .jv {
+            font-family: var(--mono);
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        /* ── LOG-LIKELIHOOD CHART ── */
+        #conv-canvas {
+            border-radius: var(--radius-sm);
+        }
+
+        /* ── STEP INDICATOR ── */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 1rem;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .step-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            border: 1.5px solid var(--border-hi);
+            color: var(--muted);
+            transition: all .3s;
+        }
+
+        .step-dot.done {
+            background: var(--accent-b);
+            border-color: var(--accent-b);
+            color: #ffffff;
+        }
+
+        .step-dot.active {
+            background: var(--accent-a);
+            border-color: var(--accent-a);
+            color: #fff;
+        }
+
+        .step-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+            max-width: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="hero">
+        <div class="hero-label">Section 4 — Machine Learning</div>
+        <h1>Expectation–<em>Maximization</em></h1>
+        <p>Five interactive examples that build intuition from the ground up. Tap any section to explore.</p>
+    </div>
+
+    <nav class="nav-strip" role="navigation">
+        <button class="nav-btn active" onclick="showSection('s41')">4.1 Intro & EM</button>
+        <button class="nav-btn" onclick="showSection('s42')">4.2 E-Step</button>
+        <button class="nav-btn" onclick="showSection('s43')">4.3 M-Step</button>
+        <button class="nav-btn" onclick="showSection('s44')">4.4 Convergence</button>
+        <button class="nav-btn" onclick="showSection('s45')">4.5 Jensen's</button>
+    </nav>
+
+    <main class="main">
+
+        <!-- ══════════════════════ 4.1 ══════════════════════ -->
+        <section class="section active" id="s41">
+            <div class="section-num">4.1</div>
+            <h2 class="section-title">Introduction to <span class="highlight">EM Algorithm</span></h2>
+
+            <div class="def-card">
+                <strong>The core problem EM solves:</strong> You have data with missing or hidden information, and you
+                can't solve for the parameters without knowing the hidden data — and you can't infer the hidden data
+                without the parameters. EM breaks this circular dependency by alternating between the two.
+            </div>
+
+            <p style="color:var(--muted2);font-size:14px;margin-bottom:1rem">
+                <strong style="color:var(--text)">Example: The Two Coins Problem.</strong> Two biased coins exist — Coin
+                A and Coin B with different head probabilities. Someone secretly picks one and flips it 10 times. You
+                see the results but <em>never learn which coin was used</em>. EM figures out both the coin biases AND
+                which coin was likely used.
+            </p>
+
+            <div class="demo-card">
+                <div class="demo-header">
+                    <div class="demo-dot" style="background:var(--accent-c)"></div>
+                    <div class="demo-dot" style="background:var(--accent-e)"></div>
+                    <div class="demo-dot" style="background:var(--accent-b)"></div>
+                    <span class="demo-title">two_coins_em.py — interactive simulation</span>
+                </div>
+                <div class="demo-body">
+
+                    <div class="coin-grid">
+                        <div>
+                            <div class="coin-setup-label">Configure coins</div>
+                            <div class="coin-inputs">
+                                <div class="slider-row">
+                                    <label>Coin A (p_H)</label>
+                                    <input type="range" id="trueA" min="0.1" max="0.95" step="0.05" value="0.7"
+                                        oninput="updateCoinLabels()">
+                                    <span class="val" id="trueA-val">0.70</span>
+                                </div>
+                                <div class="slider-row">
+                                    <label>Coin B (p_H)</label>
+                                    <input type="range" id="trueB" min="0.05" max="0.9" step="0.05" value="0.35"
+                                        oninput="updateCoinLabels()">
+                                    <span class="val" id="trueB-val">0.35</span>
+                                </div>
+                                <div class="slider-row">
+                                    <label>Flips</label>
+                                    <input type="range" id="numFlips" min="5" max="30" step="1" value="10"
+                                        oninput="updateCoinLabels()">
+                                    <span class="val" id="numFlips-val">10</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="coin-setup-label">Flip sequence (hidden: which coin?)</div>
+                            <div class="coin-flips-area" id="flip-display">
+                                <span style="color:var(--muted);font-size:13px">Press "Flip coins" to start</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-indicator" id="coin-steps">
+                        <div class="step-dot" id="sd1">1</div>
+                        <div class="step-line"></div>
+                        <span style="margin:0 4px">Flip</span>
+                        <div class="step-line"></div>
+                        <div class="step-dot" id="sd2">2</div>
+                        <div class="step-line"></div>
+                        <span style="margin:0 4px">E-step</span>
+                        <div class="step-line"></div>
+                        <div class="step-dot" id="sd3">3</div>
+                        <div class="step-line"></div>
+                        <span style="margin:0 4px">M-step</span>
+                        <div class="step-line"></div>
+                        <div class="step-dot" id="sd4">4</div>
+                        <div class="step-line"></div>
+                        <span style="margin:0 4px">Reveal</span>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="btn btn-primary" onclick="flipCoins()">⟳ Flip Coins</button>
+                        <button class="btn" onclick="runEMOnCoins()" id="run-em-btn" disabled>▶️ Run EM</button>
+                        <button class="btn" onclick="revealCoinTruth()" id="reveal-btn" disabled>◉ Reveal Truth</button>
+                    </div>
+
+                    <div class="stats-row" id="em-coin-stats" style="display:none">
+                        <div class="stat-chip">EM: Coin A bias = <span class="val" id="em-coinA">—</span></div>
+                        <div class="stat-chip">EM: Coin B bias = <span class="val" id="em-coinB">—</span></div>
+                        <div class="stat-chip">Likely used = <span class="val" id="em-used">—</span></div>
+                        <div class="stat-chip">Iterations = <span class="val" id="em-iters">—</span></div>
+                    </div>
+
+                    <div class="result-reveal" id="coin-reveal">
+                        <div
+                            style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase">
+                            Truth revealed</div>
+                        <div class="result-grid">
+                            <div class="result-item">
+                                <div class="k">TRUE Coin A bias</div>
+                                <div class="v" id="rev-A">—</div>
+                            </div>
+                            <div class="result-item">
+                                <div class="k">TRUE Coin B bias</div>
+                                <div class="v" id="rev-B">—</div>
+                            </div>
+                            <div class="result-item">
+                                <div class="k">COIN ACTUALLY USED</div>
+                                <div class="v" id="rev-used">—</div>
+                            </div>
+                            <div class="result-item">
+                                <div class="k">EM WAS</div>
+                                <div class="v" id="rev-verdict">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="explain-box">
+                        <span class="tag tag-e">Key idea</span>
+                        EM treats the coin identity as a hidden variable. It starts with a random guess for both biases,
+                        then alternates: "given these biases, which coin was probably used?" → "given that coin
+                        assignment, what are the best bias estimates?" — repeat until converged.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════ 4.2 ══════════════════════ -->
+        <section class="section" id="s42">
+            <div class="section-num">4.2</div>
+            <h2 class="section-title">The <span class="highlight">E-Step</span></h2>
+
+            <div class="def-card">
+                <strong>E-Step (Expectation):</strong> Given current parameter estimates, compute the <em>expected
+                    value</em> of the hidden/latent variables. Each data point gets a <strong>soft probability</strong>
+                of belonging to each cluster — not a hard assignment. This is what separates EM from K-Means.
+            </div>
+
+            <p style="color:var(--muted2);font-size:14px;margin-bottom:1rem">
+                <strong style="color:var(--text)">Example: Heights without gender labels.</strong> We have 20 people's
+                heights but no gender information. The E-step asks: given our current Gaussian model, how likely is each
+                person to be from group A vs group B?
+            </p>
+
+            <div class="demo-card">
+                <div class="demo-header">
+                    <div class="demo-dot" style="background:var(--accent-a)"></div>
+                    <div class="demo-dot" style="background:var(--accent-b)"></div>
+                    <div class="demo-dot" style="background:var(--muted)"></div>
+                    <span class="demo-title">e_step_visualizer.py — soft assignment demo</span>
+                </div>
+                <div class="demo-body">
+                    <div class="slider-row">
+                        <label>μ Group A</label>
+                        <input type="range" id="muA-e" min="155" max="175" value="162" oninput="updateEStep()">
+                        <span class="val" id="muA-e-val">162 cm</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>μ Group B</label>
+                        <input type="range" id="muB-e" min="165" max="190" value="178" oninput="updateEStep()">
+                        <span class="val" id="muB-e-val">178 cm</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>σ (spread)</label>
+                        <input type="range" id="sigma-e" min="3" max="15" value="7" oninput="updateEStep()">
+                        <span class="val" id="sigma-e-val">7</span>
+                    </div>
+
+                    <div class="canvas-wrap" style="margin-top:1rem">
+                        <canvas id="estep-canvas" height="180"></canvas>
+                    </div>
+
+                    <div style="margin-top:1.25rem">
+                        <div
+                            style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem">
+                            Soft assignment probabilities (sample points)</div>
+                        <div style="overflow-x:auto">
+                            <table class="prob-table" id="prob-table">
+                                <thead>
+                                    <tr>
+                                        <th>Height</th>
+                                        <th>P(Group A)</th>
+                                        <th>P(Group B)</th>
+                                        <th>Soft assignment</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prob-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="explain-box" style="margin-top:1rem">
+                        <span class="tag tag-e">E-step</span>
+                        Drag the sliders to move the group means. Watch how each dot's color shifts — <span
+                            style="color:var(--accent-a)">blue</span> = more likely Group A, <span
+                            style="color:var(--accent-b)">green</span> = more likely Group B. Points in between have
+                        <em>partial</em> membership in both groups simultaneously.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════ 4.3 ══════════════════════ -->
+        <section class="section" id="s43">
+            <div class="section-num">4.3</div>
+            <h2 class="section-title">The <span class="highlight">M-Step</span></h2>
+
+            <div class="def-card">
+                <strong>M-Step (Maximization):</strong> Using the soft assignments from the E-step as weights,
+                <em>re-estimate the model parameters</em> to maximize the expected log-likelihood. Each data point
+                contributes to each group proportionally to its membership probability.
+            </div>
+
+            <p style="color:var(--muted2);font-size:14px;margin-bottom:1rem">
+                <strong style="color:var(--text)">Watch the full EM loop.</strong> Two Gaussian curves start at random
+                positions. Each iteration: E-step computes soft assignments → M-step moves the means to the weighted
+                center of each cluster. The curves chase the data.
+            </p>
+
+            <div class="demo-card">
+                <div class="demo-header">
+                    <div class="demo-dot" style="background:var(--accent-a)"></div>
+                    <div class="demo-dot" style="background:var(--accent-b)"></div>
+                    <div class="demo-dot" style="background:var(--accent-c)"></div>
+                    <span class="demo-title">m_step_loop.py — EM iteration visualizer</span>
+                </div>
+                <div class="demo-body">
+                    <div class="canvas-wrap">
+                        <canvas id="mstep-canvas" height="220"></canvas>
+                    </div>
+
+                    <div class="stats-row" id="mstep-stats" style="margin-top:.75rem">
+                        <div class="stat-chip">Iteration: <span class="val" id="ms-iter">0</span></div>
+                        <div class="stat-chip">μ<sub>A</sub> = <span class="val" id="ms-muA">—</span></div>
+                        <div class="stat-chip">μ<sub>B</sub> = <span class="val" id="ms-muB">—</span></div>
+                        <div class="stat-chip">Δμ<sub>A</sub> = <span class="val" id="ms-delta">—</span></div>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="btn btn-primary" onclick="mStepOne()">▶️ One Iteration</button>
+                        <button class="btn btn-success" onclick="mStepRun()">▶️▶️ Run to Convergence</button>
+                        <button class="btn" onclick="mStepReset()">⟳ New Dataset</button>
+                    </div>
+
+                    <div class="explain-box">
+                        <span class="tag tag-m">M-step</span>
+                        New mean = Σ(wᵢ · xᵢ) / Σ(wᵢ) — a weighted average where each person's height is weighted by
+                        their probability of belonging to that group. The 6'2" person barely counts toward group B. The
+                        ambiguous 5'8" person counts 50-50 toward both.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════ 4.4 ══════════════════════ -->
+        <section class="section" id="s44">
+            <div class="section-num">4.4</div>
+            <h2 class="section-title">Convergence <span class="highlight">of EM</span></h2>
+
+            <div class="def-card">
+                <strong>Convergence guarantee:</strong> Every EM iteration either <em>increases</em> the log-likelihood
+                or keeps it exactly the same — it can never decrease. EM always reaches <em>a</em> peak, but not
+                necessarily the global maximum. Different starting points may converge to different local optima.
+            </div>
+
+            <p style="color:var(--muted2);font-size:14px;margin-bottom:1rem">
+                <strong style="color:var(--text)">Try multiple random starts.</strong> Hit "New Random Start" to
+                initialize EM at a different point. Some starts find higher optima than others — this is why real
+                implementations run EM many times and pick the best result.
+            </p>
+
+            <div class="demo-card">
+                <div class="demo-header">
+                    <div class="demo-dot" style="background:var(--accent-e)"></div>
+                    <div class="demo-dot" style="background:var(--accent-c)"></div>
+                    <div class="demo-dot" style="background:var(--muted)"></div>
+                    <span class="demo-title">convergence_plot.py — log-likelihood over iterations</span>
+                </div>
+                <div class="demo-body">
+                    <div class="canvas-wrap">
+                        <canvas id="conv-canvas" height="240"></canvas>
+                    </div>
+
+                    <div class="stats-row" id="conv-stats" style="margin-top:.75rem">
+                        <div class="stat-chip">Iteration: <span class="val" id="cv-iter">0</span></div>
+                        <div class="stat-chip">Log-L: <span class="val" id="cv-ll">—</span></div>
+                        <div class="stat-chip">Δ: <span class="val" id="cv-delta">—</span></div>
+                        <div class="stat-chip">Status: <span class="val" id="cv-status">—</span></div>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="btn btn-primary" onclick="convStep()">▶️ One Step</button>
+                        <button class="btn btn-success" onclick="convRunAll()">▶️▶️ Run All</button>
+                        <button class="btn" onclick="convReset()">⟳ New Random Start</button>
+                    </div>
+
+                    <div id="conv-runs-summary" style="margin-top:.75rem"></div>
+
+                    <div class="explain-box">
+                        <span class="tag tag-c">Convergence</span>
+                        The curve always goes up or flat — never dips. Try 3–4 different random starts and compare the
+                        final log-likelihood values. The best one is what you'd report. In practice, run EM 10–20 times
+                        and keep the run with the highest final score.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════ 4.5 ══════════════════════ -->
+        <section class="section" id="s45">
+            <div class="section-num">4.5</div>
+            <h2 class="section-title">Jensen's Inequality & <span class="highlight">Lower Bound</span></h2>
+
+            <div class="def-card">
+                <strong>Jensen's Inequality:</strong> For a <em>concave</em> function f (like log), <strong>f(E[X]) ≥
+                    E[f(X)]</strong>. The function evaluated at the average is always ≥ the average of the function
+                values. The chord between two points on a concave curve always lies <em>below</em> the curve.
+            </div>
+
+            <p style="color:var(--muted2);font-size:14px;margin-bottom:1rem">
+                <strong style="color:var(--text)">Why EM never decreases.</strong> The true log-likelihood is hard to
+                optimize directly (log of a sum). Jensen lets EM construct a simpler <em>lower bound</em> — always ≤ the
+                real thing. Each iteration maximizes this bound, which provably lifts the real likelihood upward.
+            </p>
+
+            <div class="demo-card">
+                <div class="demo-header">
+                    <div class="demo-dot" style="background:var(--accent-d)"></div>
+                    <div class="demo-dot" style="background:var(--accent-a)"></div>
+                    <div class="demo-dot" style="background:var(--accent-c)"></div>
+                    <span class="demo-title">jensens_inequality.py — interactive lower bound visualization</span>
+                </div>
+                <div class="demo-body">
+                    <div class="slider-row">
+                        <label>Point A (x₁)</label>
+                        <input type="range" id="jx1" min="2" max="80" value="15" oninput="drawJensen()">
+                        <span class="val" id="jx1v">15</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Point B (x₂)</label>
+                        <input type="range" id="jx2" min="20" max="98" value="75" oninput="drawJensen()">
+                        <span class="val" id="jx2v">75</span>
+                    </div>
+
+                    <div class="canvas-wrap" style="margin-top:1rem">
+                        <canvas id="jensen-canvas" height="260"></canvas>
+                    </div>
+
+                    <div class="jensen-info">
+                        <div class="jensen-stat">
+                            <div class="jk">f(avg(A, B))</div>
+                            <div class="jv" id="j-curve" style="color:var(--accent-b)">—</div>
+                            <div style="font-size:11px;color:var(--muted);margin-top:4px">log(midpoint x)</div>
+                        </div>
+                        <div class="jensen-stat">
+                            <div class="jk">avg(f(A), f(B))</div>
+                            <div class="jv" id="j-chord" style="color:var(--accent-c)">—</div>
+                            <div style="font-size:11px;color:var(--muted);margin-top:4px">midpoint of chord</div>
+                        </div>
+                        <div class="jensen-stat">
+                            <div class="jk">Gap (always ≥ 0)</div>
+                            <div class="jv" id="j-gap" style="color:var(--accent-d)">—</div>
+                            <div style="font-size:11px;color:var(--muted);margin-top:4px">curve − chord</div>
+                        </div>
+                    </div>
+
+                    <div
+                        style="margin-top:1rem;padding:1rem 1.25rem;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm)">
+                        <div
+                            style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.5rem">
+                            The EM lower bound — staircase analogy</div>
+                        <canvas id="staircase-canvas" height="120"></canvas>
+                    </div>
+
+                    <div class="explain-box" style="margin-top:1rem">
+                        <span class="tag tag-j">Jensen</span>
+                        The <span style="color:var(--accent-b)">green curve</span> is log(x). The <span
+                            style="color:var(--accent-c)">orange chord</span> always stays below. The midpoint of the
+                        chord (orange dot) is always lower than the curve (green dot). EM repeatedly builds a new lower
+                        bound tangent to the curve at the current estimate, maximizes it, and repeats — like climbing a
+                        staircase.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // ═══════════════════════════ UTILITIES ═══════════════════════════
+        function gaussPDF(x, mu, sigma) {
+            return Math.exp(-0.5 * ((x - mu) / sigma) ** 2) / (sigma * Math.sqrt(2 * Math.PI));
+        }
+
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.currentTarget.classList.add('active');
+            if (id === 's42') { setTimeout(updateEStep, 60); }
+            if (id === 's43') { setTimeout(() => { mStepReset(); }, 60); }
+            if (id === 's44') { setTimeout(convReset, 60); }
+            if (id === 's45') { setTimeout(drawJensen, 60); setTimeout(drawStaircase, 80); }
+        }
+
+        // ═══════════════════════════ 4.1 COINS ═══════════════════════════
+        let coinState = null;
+
+        function updateCoinLabels() {
+            document.getElementById('trueA-val').textContent = (+document.getElementById('trueA').value).toFixed(2);
+            document.getElementById('trueB-val').textContent = (+document.getElementById('trueB').value).toFixed(2);
+            document.getElementById('numFlips-val').textContent = document.getElementById('numFlips').value;
+        }
+
+        function setStepDot(n, state) {
+            const el = document.getElementById('sd' + n);
+            el.classList.remove('active', 'done');
+            if (state === 'active') el.classList.add('active');
+            if (state === 'done') el.classList.add('done');
+        }
+
+        async function flipCoins() {
+            const tA = +document.getElementById('trueA').value;
+            const tB = +document.getElementById('trueB').value;
+            const n = +document.getElementById('numFlips').value;
+            const usedA = Math.random() < 0.5;
+            const p = usedA ? tA : tB;
+            const seq = Array.from({ length: n }, () => Math.random() < p ? 'H' : 'T');
+            coinState = { tA, tB, usedA, seq };
+
+            const display = document.getElementById('flip-display');
+            display.innerHTML = '';
+            setStepDot(1, 'active');
+            for (let i = 0; i < seq.length; i++) {
+                await new Promise(r => setTimeout(r, 80));
+                const span = document.createElement('div');
+                span.className = `flip-coin flip-${ seq[i] }`;
+                span.textContent = seq[i];
+                span.style.animationDelay = '0s';
+                display.appendChild(span);
+            }
+            setStepDot(1, 'done');
+            document.getElementById('run-em-btn').disabled = false;
+            document.getElementById('reveal-btn').disabled = true;
+            document.getElementById('em-coin-stats').style.display = 'none';
+            document.getElementById('coin-reveal').classList.remove('show');
+        }
+
+        function runEMOnCoins() {
+            if (!coinState) return;
+            setStepDot(2, 'active');
+            const { seq } = coinState;
+            const n = seq.length;
+            const H = seq.filter(x => x === 'H').length;
+            const T = n - H;
+
+            let a = 0.4 + Math.random() * 0.4;
+            let b = 0.2 + Math.random() * 0.4;
+            let iters = 0;
+            let prev_a = 0;
+
+            for (let iter = 0; iter < 200; iter++) {
+                // E-step: compute responsibilities
+                const log_pA = H * Math.log(a + 1e-10) + T * Math.log(1 - a + 1e-10);
+                const log_pB = H * Math.log(b + 1e-10) + T * Math.log(1 - b + 1e-10);
+                const max_log = Math.max(log_pA, log_pB);
+                const pA = Math.exp(log_pA - max_log);
+                const pB = Math.exp(log_pB - max_log);
+                const wA = pA / (pA + pB);
+                const wB = pB / (pA + pB);
+                // M-step
+                prev_a = a;
+                a = (wA * H + 1e-4) / (wA * n + 2e-4);
+                b = (wB * H + 1e-4) / (wB * n + 2e-4);
+                iters++;
+                if (Math.abs(a - prev_a) < 1e-6) break;
+            }
+
+            setStepDot(2, 'done');
+            setStepDot(3, 'active');
+
+            const log_pA = H * Math.log(a + 1e-10) + T * Math.log(1 - a + 1e-10);
+            const log_pB = H * Math.log(b + 1e-10) + T * Math.log(1 - b + 1e-10);
+            const usedA_guess = log_pA > log_pB;
+
+            document.getElementById('em-coinA').textContent = a.toFixed(3);
+            document.getElementById('em-coinB').textContent = b.toFixed(3);
+            document.getElementById('em-used').textContent = usedA_guess ? 'Coin A' : 'Coin B';
+            document.getElementById('em-iters').textContent = iters;
+            document.getElementById('em-coin-stats').style.display = 'flex';
+            coinState.emUsedA = usedA_guess;
+            coinState.emA = a; coinState.emB = b;
+            setStepDot(3, 'done');
+            setStepDot(4, 'active');
+            document.getElementById('reveal-btn').disabled = false;
+        }
+
+        function revealCoinTruth() {
+            if (!coinState) return;
+            const { tA, tB, usedA, emUsedA } = coinState;
+            document.getElementById('rev-A').textContent = tA.toFixed(2);
+            document.getElementById('rev-B').textContent = tB.toFixed(2);
+            const usedEl = document.getElementById('rev-used');
+            usedEl.textContent = usedA ? 'Coin A' : 'Coin B';
+            const correct = usedA === emUsedA;
+            const verdict = document.getElementById('rev-verdict');
+            verdict.textContent = correct ? '✓ Correct!' : '✗ Wrong (can happen with short sequences)';
+            verdict.className = 'v ' + (correct ? 'correct' : 'wrong');
+            document.getElementById('coin-reveal').classList.add('show');
+            setStepDot(4, 'done');
+        }
+
+        // ═══════════════════════════ 4.2 E-STEP ═══════════════════════════
+        const heightData = [152, 155, 157, 158, 160, 161, 163, 165, 166, 168,
+            170, 172, 173, 175, 176, 178, 180, 183, 185, 188];
+
+        function updateEStep() {
+            const muA = +document.getElementById('muA-e').value;
+            const muB = +document.getElementById('muB-e').value;
+            const sigma = +document.getElementById('sigma-e').value;
+            document.getElementById('muA-e-val').textContent = muA + ' cm';
+            document.getElementById('muB-e-val').textContent = muB + ' cm';
+            document.getElementById('sigma-e-val').textContent = sigma;
+
+            const probs = heightData.map(h => {
+                const pA = gaussPDF(h, muA, sigma);
+                const pB = gaussPDF(h, muB, sigma);
+                return pA / (pA + pB + 1e-10);
+            });
+
+            drawEStepCanvas(muA, muB, sigma, probs);
+            updateProbTable(probs);
+        }
+
+        function drawEStepCanvas(muA, muB, sigma, probs) {
+            const canvas = document.getElementById('estep-canvas');
+            if (!canvas) return;
+            const W = canvas.offsetWidth || 560, H = 180;
+            canvas.width = W; canvas.height = H;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, W, H);
+
+            const minH = 146, maxH = 194, padL = 30, padR = 20, padT = 10, padB = 36;
+            const xs = x => padL + (x - minH) / (maxH - minH) * (W - padL - padR);
+            const chartH = H - padT - padB;
+
+            // Grid lines
+            ctx.strokeStyle = 'rgba(24, 54, 83, 0.08)'; ctx.lineWidth = 0.5;
+            [150, 155, 160, 165, 170, 175, 180, 185, 190].forEach(v => {
+                ctx.beginPath(); ctx.moveTo(xs(v), padT); ctx.lineTo(xs(v), H - padB); ctx.stroke();
+                ctx.fillStyle = 'rgba(18, 18, 18, 0.65)'; ctx.font = '10px IBM Plex Mono'; ctx.textAlign = 'center';
+                ctx.fillText(v, xs(v), H - 10);
+            });
+            ctx.fillStyle = 'rgba(18, 18, 18, 0.65)'; ctx.font = '10px IBM Plex Mono'; ctx.textAlign = 'center';
+            ctx.fillText('Height (cm)', W / 2, H - 1);
+
+            // Gaussian curves
+            const drawGauss = (mu, color, alpha) => {
+                const maxY = gaussPDF(mu, mu, sigma);
+                ctx.beginPath();
+                for (let x = minH; x <= maxH; x += 0.3) {
+                    const y = gaussPDF(x, mu, sigma) / maxY;
+                    const cx = xs(x), cy = padT + (1 - y) * chartH;
+                    x === minH ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
+                }
+                ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.7; ctx.stroke();
+                ctx.globalAlpha = 1;
+            };
+            drawGauss(muA, '#183653', 0.7);
+            drawGauss(muB, '#16805d', 0.7);
+
+            // Dots
+            heightData.forEach((h, i) => {
+                const p = probs[i];
+                const r = Math.round(p * 79 + (1 - p) * 45);
+                const g = Math.round(p * 142 + (1 - p) * 212);
+                const b = Math.round(p * 247 + (1 - p) * 160);
+                const x = xs(h), y = H / 2;
+                ctx.beginPath(); ctx.arc(x, y, 8, 0, 2 * Math.PI);
+                ctx.fillStyle = `rgb(${ r }, ${ g }, ${ b })`; ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 0.5; ctx.stroke();
+                ctx.fillStyle = '#ffffff'; ctx.font = 'bold 8px IBM Plex Mono'; ctx.textAlign = 'center';
+                ctx.fillText(h, x, y + 4);
+            });
+
+            // Mean lines
+            ctx.setLineDash([4, 3]);
+            ctx.strokeStyle = '#183653'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(xs(muA), padT); ctx.lineTo(xs(muA), H - padB); ctx.stroke();
+            ctx.strokeStyle = '#16805d';
+            ctx.beginPath(); ctx.moveTo(xs(muB), padT); ctx.lineTo(xs(muB), H - padB); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Legend
+            ctx.fillStyle = '#183653'; ctx.font = '11px IBM Plex Mono'; ctx.textAlign = 'left';
+            ctx.fillText('● Group A (μ=' + muA + ')', padL, padT + 12);
+            ctx.fillStyle = '#16805d';
+            ctx.fillText('● Group B (μ=' + muB + ')', padL + 140, padT + 12);
+        }
+
+        function updateProbTable(probs) {
+            const tbody = document.getElementById('prob-tbody');
+            const sample = [0, 3, 7, 10, 14, 17, 19];
+            tbody.innerHTML = sample.map(i => {
+                const h = heightData[i], p = probs[i];
+                const pA = (p * 100).toFixed(1), pB = ((1 - p) * 100).toFixed(1);
+                const barA = Math.round(p * 100), barB = 100 - barA;
+                return `<tr>
+      <td style="font-family:var(--mono);font-size:12px">${h} cm</td>
+      <td>
+        <div class="prob-bar-wrap">
+          <div class="prob-bar-bg"><div class="prob-bar-fill" style="width:${barA}%;background:#183653"></div></div>
+          <span style="font-family:var(--mono);font-size:11px;color:#183653;min-width:40px">${pA}%</span>
+        </div>
+      </td>
+      <td>
+        <div class="prob-bar-wrap">
+          <div class="prob-bar-bg"><div class="prob-bar-fill" style="width:${barB}%;background:#16805d"></div></div>
+          <span style="font-family:var(--mono);font-size:11px;color:#16805d;min-width:40px">${pB}%</span>
+        </div>
+      </td>
+      <td style="font-size:12px;color:${p > 0.6 ? '#183653' : p < 0.4 ? '#16805d' : 'var(--muted2)'}">${p > 0.6 ? 'A' : p < 0.4 ? 'B' : 'Uncertain'}</td>
+    </tr>`;
+            }).join('');
+        }
+
+        // ═══════════════════════════ 4.3 M-STEP ═══════════════════════════
+        let msData = [], msMuA = 0, msMuB = 0, msSigmaA = 8, msSigmaB = 8;
+        let msIter = 0, msPrevMuA = 0;
+
+        function mStepReset() {
+            msData = Array.from({ length: 10 }, () => 152 + Math.random() * 12)
+                .concat(Array.from({ length: 10 }, () => 172 + Math.random() * 14));
+            msMuA = 155 + Math.random() * 20;
+            msMuB = msMuA + 4 + Math.random() * 18;
+            msIter = 0; msPrevMuA = msMuA;
+            document.getElementById('ms-iter').textContent = '0';
+            document.getElementById('ms-delta').textContent = '—';
+            drawMStep();
+        }
+
+        function mStepOne() {
+            msPrevMuA = msMuA;
+            const pA = msData.map(h => gaussPDF(h, msMuA, msSigmaA));
+            const pB = msData.map(h => gaussPDF(h, msMuB, msSigmaB));
+            const w = msData.map((_, i) => pA[i] / (pA[i] + pB[i] + 1e-10));
+            const swA = w.reduce((a, b) => a + b, 0);
+            const swB = w.reduce((a, b) => a + (1 - b), 0);
+            const newMuA = msData.reduce((s, h, i) => s + w[i] * h, 0) / (swA + 1e-10);
+            const newMuB = msData.reduce((s, h, i) => s + (1 - w[i]) * h, 0) / (swB + 1e-10);
+            msMuA = newMuA; msMuB = newMuB; msIter++;
+            document.getElementById('ms-iter').textContent = msIter;
+            document.getElementById('ms-muA').textContent = msMuA.toFixed(2) + ' cm';
+            document.getElementById('ms-muB').textContent = msMuB.toFixed(2) + ' cm';
+            document.getElementById('ms-delta').textContent = Math.abs(msMuA - msPrevMuA).toFixed(4);
+            drawMStep();
+        }
+
+        function mStepRun() {
+            let i = 0;
+            const id = setInterval(() => {
+                mStepOne();
+                if (++i >= 25 || Math.abs(msMuA - msPrevMuA) < 0.001) clearInterval(id);
+            }, 160);
+        }
+
+        function drawMStep() {
+            const canvas = document.getElementById('mstep-canvas');
+            if (!canvas) return;
+            const W = canvas.offsetWidth || 560, H = 220;
+            canvas.width = W; canvas.height = H;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, W, H);
+
+            const all = [...msData];
+            const minH = Math.min(...all) - 5, maxH = Math.max(...all) + 5;
+            const padL = 32, padR = 20, padT = 14, padB = 36;
+            const xs = x => padL + (x - minH) / (maxH - minH) * (W - padL - padR);
+            const chartH = H - padT - padB;
+
+            ctx.strokeStyle = 'rgba(24, 54, 83, 0.08)'; ctx.lineWidth = 0.5;
+            for (let v = Math.ceil(minH / 5) * 5; v <= maxH; v += 5) {
+                ctx.beginPath(); ctx.moveTo(xs(v), padT); ctx.lineTo(xs(v), H - padB); ctx.stroke();
+                ctx.fillStyle = 'rgba(18, 18, 18, 0.55)'; ctx.font = '9px IBM Plex Mono'; ctx.textAlign = 'center';
+                ctx.fillText(v, xs(v), H - 14);
+            }
+
+            const pA = msData.map(h => gaussPDF(h, msMuA, msSigmaA));
+            const pB = msData.map(h => gaussPDF(h, msMuB, msSigmaB));
+            const ws = msData.map((_, i) => pA[i] / (pA[i] + pB[i] + 1e-10));
+
+            const drawGauss2 = (mu, sigma, color) => {
+                const maxY = gaussPDF(mu, mu, sigma) * chartH * 0.85;
+                ctx.beginPath();
+                for (let x = minH; x <= maxH; x += 0.2) {
+                    const y = gaussPDF(x, mu, sigma);
+                    const cx = xs(x), cy = H - padB - y * (chartH * 0.85) / gaussPDF(mu, mu, sigma);
+                    x === minH ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
+                }
+                ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.globalAlpha = 0.85; ctx.stroke();
+                ctx.globalAlpha = 1;
+
+                const pts = [];
+                for (let x = minH; x <= maxH; x += 0.3) {
+                    pts.push([xs(x), H - padB - gaussPDF(x, mu, sigma) * (chartH * 0.85) / gaussPDF(mu, mu, sigma)]);
+                }
+                ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+                pts.forEach(([cx, cy]) => ctx.lineTo(cx, cy));
+                ctx.lineTo(pts[pts.length - 1][0], H - padB); ctx.lineTo(pts[0][0], H - padB); ctx.closePath();
+                ctx.fillStyle = color.replace(')', ', 0.08)').replace('rgb', 'rgba'); ctx.fill();
+
+                ctx.setLineDash([5, 3]);
+                ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.globalAlpha = 0.6;
+                ctx.beginPath(); ctx.moveTo(xs(mu), padT); ctx.lineTo(xs(mu), H - padB); ctx.stroke();
+                ctx.setLineDash([]); ctx.globalAlpha = 1;
+            };
+
+            drawGauss2(msMuA, msSigmaA, 'rgb(79,142,247)');
+            drawGauss2(msMuB, msSigmaB, 'rgb(45,212,160)');
+
+            msData.forEach((h, i) => {
+                const p = ws[i];
+                const r = Math.round(p * 79 + (1 - p) * 45);
+                const g = Math.round(p * 142 + (1 - p) * 212);
+                const b = Math.round(p * 247 + (1 - p) * 160);
+                const x = xs(h), y = H - padB - 14;
+                ctx.beginPath(); ctx.arc(x, y, 7, 0, 2 * Math.PI);
+                ctx.fillStyle = `rgb(${ r }, ${ g }, ${ b })`; ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 0.5; ctx.stroke();
+            });
+
+            ctx.fillStyle = '#183653'; ctx.font = '11px IBM Plex Mono'; ctx.textAlign = 'left';
+            ctx.fillText('Group A  μ=' + msMuA.toFixed(1), padL, padT + 12);
+            ctx.fillStyle = '#16805d'; ctx.textAlign = 'right';
+            ctx.fillText('Group B  μ=' + msMuB.toFixed(1), W - padR, padT + 12);
+        }
+
+        // ═══════════════════════════ 4.4 CONVERGENCE ═══════════════════════════
+        let convData = [], convMuA = 0, convMuB = 0, convPi = 0.5;
+        let convLL = [], convIter = 0, convRuns = [];
+
+        function logLikelihood(data, muA, muB, piA, sigma = 8) {
+            return data.reduce((s, x) => {
+                const v = piA * gaussPDF(x, muA, sigma) + (1 - piA) * gaussPDF(x, muB, sigma);
+                return s + Math.log(v + 1e-10);
+            }, 0);
+        }
+
+        function convReset() {
+            convData = Array.from({ length: 14 }, () => 152 + Math.random() * 10)
+                .concat(Array.from({ length: 14 }, () => 174 + Math.random() * 12));
+            convMuA = 153 + Math.random() * 26;
+            convMuB = convMuA + 3 + Math.random() * 22;
+            convPi = 0.3 + Math.random() * 0.4;
+            convIter = 0; convLL = [logLikelihood(convData, convMuA, convMuB, convPi)];
+            updateConvStats();
+            drawConv();
+        }
+
+        function convStep() {
+            if (convIter >= 40) return;
+            const sigma = 8;
+            const pA = convData.map(x => convPi * gaussPDF(x, convMuA, sigma));
+            const pB = convData.map(x => (1 - convPi) * gaussPDF(x, convMuB, sigma));
+            const w = convData.map((_, i) => pA[i] / (pA[i] + pB[i] + 1e-10));
+            const sw = w.reduce((a, b) => a + b, 0);
+            convMuA = convData.reduce((s, x, i) => s + w[i] * x, 0) / (sw + 1e-10);
+            convMuB = convData.reduce((s, x, i) => s + (1 - w[i]) * x, 0) / (convData.length - sw + 1e-10);
+            convPi = sw / convData.length;
+            convIter++;
+            const ll = logLikelihood(convData, convMuA, convMuB, convPi);
+            convLL.push(ll);
+            updateConvStats();
+            drawConv();
+        }
+
+        function convRunAll() {
+            const id = setInterval(() => {
+                convStep();
+                if (convIter >= 30) {
+                    clearInterval(id);
+                    convRuns.push({ start: convLL[0].toFixed(2), final: convLL[convLL.length - 1].toFixed(2), iters: convIter });
+                    updateRunsSummary();
+                }
+            }, 120);
+        }
+
+        function updateConvStats() {
+            document.getElementById('cv-iter').textContent = convIter;
+            if (convLL.length) {
+                const ll = convLL[convLL.length - 1];
+                document.getElementById('cv-ll').textContent = ll.toFixed(3);
+                if (convLL.length > 1) {
+                    const delta = ll - convLL[convLL.length - 2];
+                    const d = document.getElementById('cv-delta');
+                    d.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(4);
+                    d.style.color = delta >= -0.0001 ? '#16805d' : '#c74a26';
+                }
+            }
+            document.getElementById('cv-status').textContent = convIter === 0 ? 'Not started' : convIter >= 30 ? 'Converged' : 'Running...';
+        }
+
+        function updateRunsSummary() {
+            if (!convRuns.length) return;
+            const div = document.getElementById('conv-runs-summary');
+            div.innerHTML = `<div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.5rem">Previous runs</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${convRuns.map((r, i) =>
+    `<div class="stat-chip" style="font-size:11px">Run ${i + 1}: <span class="val">${r.final}</span> (${r.iters} iters)</div>`
+                ).join('')}</div>`;
+        }
+
+        function drawConv() {
+            const canvas = document.getElementById('conv-canvas');
+            if (!canvas) return;
+            const W = canvas.offsetWidth || 560, H = 240;
+            canvas.width = W; canvas.height = H;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, W, H);
+            if (!convLL.length) return;
+
+            const padL = 52, padR = 20, padT = 18, padB = 36;
+            const minLL = Math.min(...convLL) - Math.abs(Math.min(...convLL)) * 0.04;
+            const maxLL = Math.max(...convLL) + Math.abs(Math.max(...convLL)) * 0.02;
+            const maxIter = Math.max(convLL.length - 1, 1);
+            const xs = i => padL + (i / maxIter) * (W - padL - padR);
+            const ys = v => padT + (1 - (v - minLL) / (maxLL - minLL)) * (H - padT - padB);
+
+            // Grid
+            ctx.strokeStyle = 'rgba(24, 54, 83, 0.07)'; ctx.lineWidth = 0.5;
+            for (let t = 0; t <= 4; t++) {
+                const v = minLL + t / 4 * (maxLL - minLL);
+                ctx.beginPath(); ctx.moveTo(padL, ys(v)); ctx.lineTo(W - padR, ys(v)); ctx.stroke();
+                ctx.fillStyle = 'rgba(18, 18, 18, 0.65)'; ctx.font = '9px IBM Plex Mono'; ctx.textAlign = 'right';
+                ctx.fillText(v.toFixed(1), padL - 4, ys(v) + 3);
+            }
+
+            ctx.fillStyle = 'rgba(18, 18, 18, 0.65)'; ctx.font = '10px IBM Plex Mono'; ctx.textAlign = 'center';
+            ctx.fillText('Iteration', W / 2, H - 6);
+            ctx.save(); ctx.translate(12, H / 2); ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Log-likelihood', 0, 0); ctx.restore();
+
+            // Line with gradient fill
+            if (convLL.length > 1) {
+                const grad = ctx.createLinearGradient(padL, padT, padL, H - padB);
+                grad.addColorStop(0, 'rgba(24, 54, 83, 0.25)');
+                grad.addColorStop(1, 'rgba(24, 54, 83, 0)');
+                ctx.beginPath();
+                convLL.forEach((v, i) => i === 0 ? ctx.moveTo(xs(i), ys(v)) : ctx.lineTo(xs(i), ys(v)));
+                ctx.lineTo(xs(convLL.length - 1), H - padB);
+                ctx.lineTo(xs(0), H - padB);
+                ctx.closePath();
+                ctx.fillStyle = grad; ctx.fill();
+
+                ctx.beginPath();
+                convLL.forEach((v, i) => i === 0 ? ctx.moveTo(xs(i), ys(v)) : ctx.lineTo(xs(i), ys(v)));
+                ctx.strokeStyle = '#183653'; ctx.lineWidth = 2.5; ctx.stroke();
+
+                convLL.forEach((v, i) => {
+                    ctx.beginPath(); ctx.arc(xs(i), ys(v), 4, 0, 2 * Math.PI);
+                    ctx.fillStyle = i === convLL.length - 1 ? '#b8860b' : '#183653'; ctx.fill();
+                });
+            }
+        }
+
+        // ═══════════════════════════ 4.5 JENSEN ═══════════════════════════
+        function drawJensen() {
+            const x1 = +document.getElementById('jx1').value;
+            const x2 = +document.getElementById('jx2').value;
+            document.getElementById('jx1v').textContent = x1;
+            document.getElementById('jx2v').textContent = x2;
+
+            const canvas = document.getElementById('jensen-canvas');
+            if (!canvas) return;
+            const W = canvas.offsetWidth || 560, H = 260;
+            canvas.width = W; canvas.height = H;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, W, H);
+
+            const domMin = 1, domMax = 100;
+            const padL = 42, padR = 20, padT = 16, padB = 36;
+            const allY = Array.from({ length: 100 }, (_, i) => Math.log(i + 1));
+            const minY = Math.min(...allY), maxY = Math.max(...allY) + 0.2;
+            const xs = x => padL + (x - domMin) / (domMax - domMin) * (W - padL - padR);
+            const ys = v => padT + (1 - (v - minY) / (maxY - minY)) * (H - padT - padB);
+
+            // Grid
+            ctx.strokeStyle = 'rgba(24, 54, 83, 0.07)'; ctx.lineWidth = 0.5;
+            [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0].forEach(v => {
+                ctx.beginPath(); ctx.moveTo(padL, ys(v)); ctx.lineTo(W - padR, ys(v)); ctx.stroke();
+                ctx.fillStyle = 'rgba(18, 18, 18, 0.55)'; ctx.font = '9px IBM Plex Mono'; ctx.textAlign = 'right';
+                ctx.fillText(v.toFixed(1), padL - 4, ys(v) + 3);
+            });
+            ctx.fillStyle = 'rgba(18, 18, 18, 0.65)'; ctx.font = '10px IBM Plex Mono'; ctx.textAlign = 'center';
+            ctx.fillText('x', W / 2, H - 8);
+
+            // Curve fill
+            const pts = [];
+            for (let x = domMin; x <= domMax; x += 0.5) pts.push([xs(x), ys(Math.log(x))]);
+            ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+            pts.forEach(([cx, cy]) => ctx.lineTo(cx, cy));
+            ctx.lineTo(pts[pts.length - 1][0], H - padB); ctx.lineTo(pts[0][0], H - padB); ctx.closePath();
+            ctx.fillStyle = 'rgba(22, 128, 93, 0.07)'; ctx.fill();
+
+            // Curve
+            ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+            pts.forEach(([cx, cy]) => ctx.lineTo(cx, cy));
+            ctx.strokeStyle = '#16805d'; ctx.lineWidth = 2.5; ctx.stroke();
+
+            const y1 = Math.log(x1), y2 = Math.log(x2);
+            const mx = (x1 + x2) / 2, my_chord = (y1 + y2) / 2, my_curve = Math.log(mx);
+
+            // Chord
+            ctx.beginPath(); ctx.moveTo(xs(x1), ys(y1)); ctx.lineTo(xs(x2), ys(y2));
+            ctx.strokeStyle = '#c74a26'; ctx.lineWidth = 2; ctx.stroke();
+
+            // Vertical gap line
+            ctx.setLineDash([4, 3]);
+            ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(xs(mx), ys(my_chord)); ctx.lineTo(xs(mx), ys(my_curve)); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Horizontal dashed to y-axis (for both points)
+            ctx.setLineDash([2, 4]); ctx.lineWidth = 0.8; ctx.strokeStyle = 'rgba(24, 54, 83, 0.25)';
+            ctx.beginPath(); ctx.moveTo(padL, ys(y1)); ctx.lineTo(xs(x1), ys(y1)); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(padL, ys(y2)); ctx.lineTo(xs(x2), ys(y2)); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Points
+            [[xs(x1), ys(y1), '#16805d', 'A'], [xs(x2), ys(y2), '#16805d', 'B'],
+            [xs(mx), ys(my_chord), '#c74a26', '½'], [xs(mx), ys(my_curve), '#16805d', 'f(½)']].forEach(([cx, cy, col, lbl]) => {
+                ctx.beginPath(); ctx.arc(cx, cy, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = col; ctx.fill();
+                ctx.strokeStyle = '#fbf8f0'; ctx.lineWidth = 1.5; ctx.stroke();
+                ctx.fillStyle = col; ctx.font = 'bold 10px IBM Plex Mono'; ctx.textAlign = 'center';
+                ctx.fillText(lbl, cx, cy - 10);
+            });
+
+            // Labels
+            ctx.fillStyle = '#16805d'; ctx.font = '11px IBM Plex Mono'; ctx.textAlign = 'left';
+            ctx.fillText('log(x) curve', padL + 8, padT + 14);
+            ctx.fillStyle = '#c74a26';
+            ctx.fillText('chord (lower bound)', padL + 8, padT + 28);
+
+            const gap = my_curve - my_chord;
+            document.getElementById('j-curve').textContent = my_curve.toFixed(4);
+            document.getElementById('j-chord').textContent = my_chord.toFixed(4);
+            const gapEl = document.getElementById('j-gap');
+            gapEl.textContent = gap.toFixed(4);
+            gapEl.style.color = gap >= 0 ? '#16805d' : '#c74a26';
+        }
+
+        function drawStaircase() {
+            const canvas = document.getElementById('staircase-canvas');
+            if (!canvas) return;
+            const W = canvas.offsetWidth || 560, H = 120;
+            canvas.width = W; canvas.height = H;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, W, H);
+
+            const padL = 20, padR = 20, padT = 10, padB = 20;
+            const xs = x => padL + x / 100 * (W - padL - padR);
+            const ys = y => padT + (1 - y) * (H - padT - padB);
+
+            // Curve
+            ctx.beginPath();
+            for (let x = 1; x <= 100; x++) {
+                const y = Math.log(x) / Math.log(100);
+                x === 1 ? ctx.moveTo(xs(x), ys(y)) : ctx.lineTo(xs(x), ys(y));
+            }
+            ctx.strokeStyle = '#16805d'; ctx.lineWidth = 2; ctx.globalAlpha = 0.6; ctx.stroke(); ctx.globalAlpha = 1;
+
+            // Staircase lower bounds
+            const starts = [5, 20, 45, 70];
+            const cols = ['#183653', '#7c3aed', '#c74a26', '#b8860b'];
+            starts.forEach((sx, idx) => {
+                const sy = Math.log(sx) / Math.log(100);
+                const nextX = starts[idx + 1] || 95;
+                const ex = nextX;
+                const ey = Math.log(ex) / Math.log(100);
+                // tangent at sx
+                const slope = 1 / sx / Math.log(100) * 100;
+                // Draw tangent line from sx-10 to nextX
+                const lx0 = Math.max(sx - 8, 1), lx1 = Math.min(ex + 4, 99);
+                const ly0 = sy + slope * (lx0 - sx) / 100 * (W - padL - padR) / (W - padL - padR) * 100;
+                ctx.beginPath();
+                ctx.moveTo(xs(lx0), ys(sy + (lx0 - sx) * slope / 100));
+                ctx.lineTo(xs(lx1), ys(sy + (lx1 - sx) * slope / 100));
+                ctx.strokeStyle = cols[idx]; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.75; ctx.stroke(); ctx.globalAlpha = 1;
+                // Vertical arrow up
+                if (idx < starts.length - 1) {
+                    const vx = xs(nextX);
+                    const ly_start = ys(sy + (nextX - sx) * slope / 100);
+                    const ly_end = ys(ey);
+                    ctx.beginPath(); ctx.moveTo(vx, ly_start); ctx.lineTo(vx, ly_end);
+                    ctx.strokeStyle = cols[idx]; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+                    ctx.globalAlpha = 0.5; ctx.stroke(); ctx.globalAlpha = 1; ctx.setLineDash([]);
+                }
+                ctx.beginPath(); ctx.arc(xs(sx), ys(sy), 4, 0, 2 * Math.PI);
+                ctx.fillStyle = cols[idx]; ctx.fill();
+            });
+
+            ctx.fillStyle = 'rgba(18, 18, 18, 0.65)'; ctx.font = '9px IBM Plex Mono'; ctx.textAlign = 'right';
+            ctx.fillText('Each tangent = one EM lower bound. Maximizing it jumps to the next tangent point.', W - padR, H - 4);
+        }
+
+        // Init
+        window.addEventListener('load', () => {
+            updateCoinLabels();
+            setTimeout(updateEStep, 100);
+            setTimeout(drawJensen, 100);
+            setTimeout(drawStaircase, 120);
+        });
+        window.addEventListener('resize', () => {
+            const active = document.querySelector('.section.active');
+            if (!active) return;
+            if (active.id === 's42') updateEStep();
+            if (active.id === 's43') drawMStep();
+            if (active.id === 's44') drawConv();
+            if (active.id === 's45') { drawJensen(); drawStaircase(); }
+        });
+    </script>
+</body>
+
+</html>

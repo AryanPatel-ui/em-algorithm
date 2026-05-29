@@ -2004,6 +2004,14 @@ function SubPage({ type, onBack }) {
     return <NeuroPlayground onBack={onBack} />
   }
 
+  if (type === 'em') {
+    return <EmAlgoPlayground onBack={onBack} />
+  }
+
+  if (type === 'presentation') {
+    return <PresentationPlayground onBack={onBack} />
+  }
+
   const pageDetails = {
     kmeans: {
       kicker: '01 / Interactive Playground',
@@ -2063,6 +2071,8 @@ const pagePaths = {
   kmeans: '/kmeans',
   rgb: '/rgb',
   neuroscience: '/neuroscience',
+  em: '/em',
+  presentation: '/presentation',
 }
 
 function getPageFromPath() {
@@ -2115,6 +2125,35 @@ function App() {
           </section>
 
           <section className="article-supplement" aria-label="Supplemental sections">
+            <div className="supplemental-section" id="presentation">
+              <h2 className="section-heading">Presentation</h2>
+              <div
+                className="presentation-card clickable-card"
+                onClick={() => navigateToPage('presentation')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && navigateToPage('presentation')}
+              >
+                <div className="presentation-preview-visual">
+                  <div className="slide-preview-mockup">
+                    <div className="mockup-header">
+                      <span className="dot"></span>
+                      <span className="dot"></span>
+                      <span className="dot"></span>
+                    </div>
+                    <div className="mockup-body">
+                      <div className="mockup-title">Expectation–Maximization</div>
+                      <div className="mockup-subtitle">A Patient Editorial Process</div>
+                      <div className="mockup-slide-num">Slide 1 / 6</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="presentation-card-footer">
+                  <button className="presentation-btn">Launch Presentation →</button>
+                </div>
+              </div>
+            </div>
+
             <div className="supplemental-section" id="maths-behind-em">
               <h2 className="section-heading">Maths Behind the EM</h2>
               <div className="placeholder-card">
@@ -2174,7 +2213,23 @@ function App() {
                     <img src="/neuro_brain.png" alt="Neural Connectome Mapping" className="viz-image" />
                   </div>
                 </div>
+
+                <div
+                  className="visualization-card clickable"
+                  id="viz-em-algo"
+                  onClick={() => navigateToPage('em')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && navigateToPage('em')}
+                >
+                  <p className="viz-card-kicker">04 / Interactive Explainer</p>
+                  <h3 className="viz-card-title">EM Algo</h3>
+                  <div className="viz-image-wrapper">
+                    <img src="/em_viz.png" alt="EM Algorithm Interactive Explainer" className="viz-image" />
+                  </div>
+                </div>
               </div>
+
             </div>
           </section>
         </main>
@@ -2184,6 +2239,270 @@ function App() {
         </main>
       )}
     </>
+  )
+}
+
+function EmAlgoPlayground({ onBack }) {
+  return (
+    <div className="em-playground-container">
+      <header className="em-playground-header">
+        <button className="back-button" onClick={onBack} aria-label="Go back to main article">
+          <span>← Back to Article</span>
+        </button>
+      </header>
+      <div className="em-iframe-wrapper">
+        <iframe
+          title="EM Algorithm Explainer"
+          src="/em_algo.html"
+          className="em-explainer-iframe"
+        />
+      </div>
+    </div>
+  )
+}
+
+function PresentationPlayground({ onBack }) {
+  const [currentSlide, setCurrentSlide] = useState(0)
+
+  const slides = [
+    {
+      title: "Introduction",
+      subtitle: "A Patient Editorial Process for Incomplete Data",
+      kicker: "01 / Introduction",
+    },
+    {
+      title: "Mathematical Background",
+      subtitle: "Objective Functions & Log-Likelihood Intractability",
+      kicker: "02 / Mathematical Background",
+    },
+    {
+      title: "Latent Variable Models",
+      subtitle: "Decoding the Hidden Driving Forces",
+      kicker: "03 / Latent Variable Models",
+    },
+    {
+      title: "Expectation–Maximization Algorithm",
+      subtitle: "Alternating Coordinate Ascent Steps",
+      kicker: "04 / Expectation–Maximization Algorithm",
+    },
+    {
+      title: "Gaussian Mixture Models",
+      subtitle: "The Canonical Latent Variable Baseline",
+      kicker: "05 / Gaussian Mixture Models",
+    },
+    {
+      title: "Implementation and Results",
+      subtitle: "",
+      kicker: "06 / Implementation and Results",
+    },
+    {
+      title: "Limitations and Applications",
+      subtitle: "Local Maxima Pitfalls & Smart Initializations",
+      kicker: "07 / Limitations and Applications",
+    },
+    {
+      title: "Conclusion",
+      subtitle: "Key Takeaways & Future Horizons",
+      kicker: "08 / Conclusion",
+    }
+  ]
+
+  const handleNext = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length)
+  }, [slides.length])
+
+  const handlePrev = useCallback(() => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
+  }, [slides.length])
+
+
+
+  // Key navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowRight') handleNext()
+      if (e.key === 'ArrowLeft') handlePrev()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleNext, handlePrev])
+
+  const progressPercent = ((currentSlide + 1) / slides.length) * 100
+
+  return (
+    <div className="em-playground-container presentation-page">
+      <header className="em-playground-header">
+        <button className="back-button" onClick={onBack} aria-label="Go back to main article">
+          <span>← Back to Article</span>
+        </button>
+      </header>
+
+      <div className="presentation-slide-deck">
+        <div className="slide-card">
+          <div className="slide-header">
+            <span className="slide-kicker">{slides[currentSlide].kicker}</span>
+            <span className="slide-counter">{currentSlide + 1} / {slides.length}</span>
+          </div>
+          
+          {currentSlide !== 2 && (
+            <h2 className="slide-title">{slides[currentSlide].title}</h2>
+          )}
+          {currentSlide !== 2 && slides[currentSlide].subtitle && (
+            <h3 className="slide-subtitle">{slides[currentSlide].subtitle}</h3>
+          )}
+
+          {currentSlide === 2 && (
+            <div className="slide-scroll-body" style={{
+              width: '100%',
+              maxHeight: '430px',
+              overflowY: 'auto',
+              textAlign: 'center',
+              padding: '0 40px 30px 40px',
+              marginTop: '10px',
+              fontFamily: 'var(--sans)',
+              fontSize: '0.96rem',
+              color: '#2c3033',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}>
+              <div style={{ width: '100%', maxWidth: '720px' }}>
+                <h4 style={{ color: '#183653', marginTop: '0', marginBottom: '12px', fontSize: '1.15rem', fontWeight: '800', letterSpacing: '0.04em' }}>LATENT VARIABLES</h4>
+                <div style={{ margin: '0 auto 28px auto', lineHeight: '1.7', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div>• Hidden variables that cannot be directly observed</div>
+                  <div>• Represent underlying factors that influence observed data</div>
+                  <div>• Denoted by <strong>Z</strong></div>
+                  <div>• Observed variables are denoted by <strong>X</strong></div>
+                  <div>• Model parameters are denoted by <strong>θ</strong></div>
+                </div>
+
+                <h4 style={{ color: '#183653', marginTop: '32px', marginBottom: '12px', fontSize: '1.15rem', fontWeight: '800', letterSpacing: '0.04em' }}>KEY IDEA</h4>
+                <div style={{ margin: '0 auto 28px auto', lineHeight: '1.7', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div>• Observed data is generated by hidden factors</div>
+                  <div>• Latent variables explain patterns and structure in data</div>
+                  <div>• Many real-world problems contain hidden information</div>
+                </div>
+
+                <h4 style={{ color: '#183653', marginTop: '32px', marginBottom: '12px', fontSize: '1.15rem', fontWeight: '800', letterSpacing: '0.04em' }}>EXAMPLE</h4>
+                <div style={{ margin: '0 auto 28px auto', lineHeight: '1.7', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div>• Customer Purchases &rarr; Observed Data (X)</div>
+                  <div>• Customer Preferences &rarr; Latent Variable (Z)</div>
+                </div>
+
+                <h4 style={{ color: '#183653', marginTop: '32px', marginBottom: '12px', fontSize: '1.15rem', fontWeight: '800', letterSpacing: '0.04em' }}>GRAPHICAL MODEL</h4>
+                <div style={{ background: '#ede4d2', padding: '10px 24px', borderRadius: '4px', display: 'inline-block', fontFamily: 'var(--serif)', fontSize: '1.2rem', fontWeight: '600', color: '#183653', margin: '0 auto 16px auto', border: '1px solid #d7d4c9', letterSpacing: '0.05em' }}>
+                  θ &rarr; Z &rarr; X
+                </div>
+                <div style={{ margin: '0 auto 28px auto', lineHeight: '1.7', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div>• Parameters generate latent variables</div>
+                  <div>• Latent variables generate observations</div>
+                </div>
+
+                <h4 style={{ color: '#183653', marginTop: '32px', marginBottom: '12px', fontSize: '1.15rem', fontWeight: '800', letterSpacing: '0.04em' }}>JOINT PROBABILITY</h4>
+                <div style={{ background: '#ede4d2', padding: '10px 24px', borderRadius: '4px', display: 'inline-block', fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: '1.2rem', color: '#183653', margin: '0 auto 16px auto', border: '1px solid #d7d4c9' }}>
+                  P(X, Z | θ)
+                </div>
+                <div style={{ margin: '0 auto 28px auto', lineHeight: '1.7', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div>• Describes the relationship between observed and hidden variables</div>
+                </div>
+
+                <h4 style={{ color: '#183653', marginTop: '32px', marginBottom: '12px', fontSize: '1.15rem', fontWeight: '800', letterSpacing: '0.04em' }}>MARGINALIZATION</h4>
+                <div style={{ margin: '0 auto 16px auto', lineHeight: '1.7' }}>
+                  Latent variables are unknown. Sum over all possible hidden states:
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center', margin: '0 auto 28px auto' }}>
+                  <div style={{ background: '#ede4d2', padding: '14px 20px', borderRadius: '6px', borderLeft: '3px solid #183653', width: '100%', maxWidth: '340px', fontFamily: 'var(--mono)', fontSize: '0.84rem' }}>
+                    <strong>Discrete Z:</strong><br />
+                    P(X|θ) = &Sigma;<sub>Z</sub> P(X,Z|θ)
+                  </div>
+                  <div style={{ background: '#ede4d2', padding: '14px 20px', borderRadius: '6px', borderLeft: '3px solid #183653', width: '100%', maxWidth: '340px', fontFamily: 'var(--mono)', fontSize: '0.84rem' }}>
+                    <strong>Continuous Z:</strong><br />
+                    P(X|θ) = &int; P(X,Z|θ)dZ
+                  </div>
+                </div>
+
+                <h4 style={{ color: '#183653', marginTop: '32px', marginBottom: '12px', fontSize: '1.15rem', fontWeight: '800', letterSpacing: '0.04em' }}>APPLICATIONS</h4>
+                <div style={{ margin: '0 auto 28px auto', lineHeight: '1.7', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div>• Clustering</div>
+                  <div>• Topic Modeling</div>
+                  <div>• Recommendation Systems</div>
+                  <div>• Speech Recognition</div>
+                  <div>• Image Segmentation</div>
+                </div>
+
+                <h4 style={{ color: '#183653', marginTop: '32px', marginBottom: '12px', fontSize: '1.15rem', fontWeight: '800', letterSpacing: '0.04em' }}>IMPORTANCE</h4>
+                <div style={{ margin: '0 auto 28px auto', lineHeight: '1.7', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div>• Models hidden information</div>
+                  <div>• Explains underlying data structure</div>
+                  <div>• Handles uncertainty</div>
+                  <div>• Foundation of EM Algorithm</div>
+                </div>
+
+                <h4 style={{ color: '#183653', marginTop: '32px', marginBottom: '12px', fontSize: '1.15rem', fontWeight: '800', letterSpacing: '0.04em' }}>LINK TO EM</h4>
+                <div style={{ margin: '0 auto 28px auto', lineHeight: '1.7', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div>• Latent variables are unknown</div>
+                  <div>• Direct likelihood optimization becomes difficult</div>
+                  <div>• Creates the Log-Sum Problem</div>
+                  <div>• EM estimates Z and updates θ iteratively</div>
+                </div>
+
+                <h4 style={{ color: '#183653', marginTop: '40px', marginBottom: '12px', fontSize: '1.15rem', fontWeight: '800', letterSpacing: '0.04em' }}>ONE-LINE SUMMARY</h4>
+                <blockquote style={{ margin: '16px auto 0 auto', maxWidth: '600px', padding: '16px 24px', borderLeft: 'none', borderTop: '2px solid #c74a26', borderBottom: '2px solid #c74a26', fontSize: '1.08rem', fontStyle: 'italic', color: '#183653', lineHeight: '1.6' }}>
+                  "Latent variables (Z) are hidden factors that influence observed data (X) and help explain the underlying structure of the data."
+                </blockquote>
+              </div>
+            </div>
+          )}
+
+          {currentSlide === 5 && (
+            <button
+              className="presentation-btn slide-action-btn"
+              onClick={() => {
+                onBack()
+                setTimeout(() => {
+                  const el = document.getElementById('visualization')
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }
+                }, 100)
+              }}
+              style={{ marginTop: '40px' }}
+            >
+              Explore Interactive Visualizers →
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="presentation-controls-bar">
+        <div className="slide-progress-track">
+          <div className="slide-progress-bar" style={{ width: `${progressPercent}%` }}></div>
+        </div>
+
+        <div className="presentation-actions">
+          <button className="btn control-btn" onClick={handlePrev} aria-label="Previous slide">
+            ◀ Previous
+          </button>
+
+          <button className="btn btn-primary control-btn" onClick={handleNext} aria-label="Next slide">
+            Next ▶
+          </button>
+        </div>
+
+        <div className="slide-dots">
+          {slides.map((_, idx) => (
+            <button
+              key={idx}
+              className={`slide-dot-indicator ${idx === currentSlide ? 'active' : ''}`}
+              onClick={() => {
+                setCurrentSlide(idx)
+              }}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 
