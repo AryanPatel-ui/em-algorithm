@@ -107,6 +107,164 @@ const squaredDistance = (a, b) => {
 
 const formatCoord = (value) => value.toFixed(1)
 
+const rgbPresets = {
+  portrait: {
+    label: 'Portrait',
+    centers: [
+      [224, 176, 134],
+      [165, 96, 68],
+      [72, 55, 47],
+      [238, 221, 198],
+    ],
+  },
+  landscape: {
+    label: 'Landscape',
+    centers: [
+      [46, 111, 62],
+      [116, 157, 78],
+      [76, 138, 188],
+      [218, 190, 118],
+    ],
+  },
+  city: {
+    label: 'City',
+    centers: [
+      [42, 52, 67],
+      [116, 126, 136],
+      [205, 188, 152],
+      [184, 73, 55],
+    ],
+  },
+}
+
+const rgbClusterColors = ['#ef4444', '#22c55e', '#3b82f6', '#f59e0b']
+
+function createRgbSamples(presetKey, componentCount, spread) {
+  const preset = rgbPresets[presetKey] ?? rgbPresets.portrait
+  const centers = preset.centers.slice(0, componentCount)
+
+  return Array.from({ length: 360 }, (_, index) => {
+    const centerIndex = index % centers.length
+    const center = centers[centerIndex]
+    const wave = Math.sin(index * 12.9898) * 43758.5453
+    const jitter = wave - Math.floor(wave)
+    const channel = (value, offset) =>
+      Math.max(
+        0,
+        Math.min(
+          255,
+          value + (jitter - 0.5) * spread + Math.sin(index * offset) * spread * 0.34,
+        ),
+      )
+
+    const rgb = [
+      channel(center[0], 0.73),
+      channel(center[1], 1.17),
+      channel(center[2], 1.61),
+    ]
+
+    return {
+      id: index,
+      rgb,
+      cluster: centerIndex,
+      color: `rgb(${rgb.map((value) => Math.round(value)).join(', ')})`,
+    }
+  })
+}
+
+function projectRgbPoint([r, g, b], angle) {
+  const scale = 1 / 255
+  const x = (r - 128) * scale
+  const y = (g - 128) * scale
+  const z = (b - 128) * scale
+  const cosY = Math.cos(angle)
+  const sinY = Math.sin(angle)
+  const cosX = Math.cos(-0.58)
+  const sinX = Math.sin(-0.58)
+  const rx = x * cosY - z * sinY
+  const rz = x * sinY + z * cosY
+  const ry = y * cosX - rz * sinX
+  const depth = y * sinX + rz * cosX
+
+  return {
+    x: rx,
+    y: ry,
+    depth,
+  }
+}
+
+function drawRgbScene(canvas, samples, centers, angle) {
+  const rect = canvas.getBoundingClientRect()
+  const ratio = window.devicePixelRatio || 1
+  canvas.width = Math.max(1, Math.floor(rect.width * ratio))
+  canvas.height = Math.max(1, Math.floor(rect.height * ratio))
+
+  const ctx = canvas.getContext('2d')
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
+  ctx.clearRect(0, 0, rect.width, rect.height)
+
+  const size = Math.min(rect.width, rect.height) * 0.56
+  const origin = { x: rect.width * 0.5, y: rect.height * 0.52 }
+  const cubeCorners = [
+    [0, 0, 0],
+    [255, 0, 0],
+    [0, 255, 0],
+    [0, 0, 255],
+    [255, 255, 0],
+    [255, 0, 255],
+    [0, 255, 255],
+    [255, 255, 255],
+  ]
+  const edges = [
+    [0, 1],
+    [0, 2],
+    [0, 3],
+    [1, 4],
+    [1, 5],
+    [2, 4],
+    [2, 6],
+    [3, 5],
+    [3, 6],
+    [4, 7],
+    [5, 7],
+    [6, 7],
+  ]
+  const projectedCorners = cubeCorners.map((corner) => projectRgbPoint(corner, angle))
+
+  ctx.lineWidth = 1
+  ctx.strokeStyle = 'rgba(24, 54, 83, 0.22)'
+  edges.forEach(([a, b]) => {
+    ctx.beginPath()
+    ctx.moveTo(origin.x + projectedCorners[a].x * size, origin.y - projectedCorners[a].y * size)
+    ctx.lineTo(origin.x + projectedCorners[b].x * size, origin.y - projectedCorners[b].y * size)
+    ctx.stroke()
+  })
+
+  samples
+    .map((sample) => ({ sample, point: projectRgbPoint(sample.rgb, angle) }))
+    .sort((a, b) => a.point.depth - b.point.depth)
+    .forEach(({ sample, point }) => {
+      const radius = 2.2 + (point.depth + 0.85) * 1.8
+      ctx.beginPath()
+      ctx.fillStyle = sample.color
+      ctx.globalAlpha = 0.74
+      ctx.arc(origin.x + point.x * size, origin.y - point.y * size, radius, 0, Math.PI * 2)
+      ctx.fill()
+    })
+
+  ctx.globalAlpha = 1
+  centers.forEach((center, index) => {
+    const point = projectRgbPoint(center, angle)
+    ctx.beginPath()
+    ctx.fillStyle = rgbClusterColors[index]
+    ctx.strokeStyle = '#ffffff'
+    ctx.lineWidth = 2.5
+    ctx.arc(origin.x + point.x * size, origin.y - point.y * size, 8, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.stroke()
+  })
+}
+
 function createDataset(includeNoise = false) {
   const centers = [
     { x: randomBetween(120, 220), y: randomBetween(125, 250) },
@@ -940,6 +1098,173 @@ function KMeansPlayground({ onBack }) {
   )
 }
 
+function RgbPlayground({ onBack }) {
+  const [preset, setPreset] = useState('portrait')
+  const [components, setComponents] = useState(3)
+  const [spread, setSpread] = useState(46)
+  const [rotation, setRotation] = useState(0)
+  const canvasRef = useRef(null)
+
+  const samples = useMemo(
+    () => createRgbSamples(preset, components, spread),
+    [preset, components, spread],
+  )
+  const centers = useMemo(
+    () => rgbPresets[preset].centers.slice(0, components),
+    [preset, components],
+  )
+  const clusterStats = useMemo(
+    () =>
+      centers.map((center, index) => {
+        const assigned = samples.filter((sample) => sample.cluster === index)
+        const variance =
+          assigned.reduce((total, sample) => {
+            const distance = sample.rgb.reduce(
+              (sum, value, channel) => sum + (value - center[channel]) ** 2,
+              0,
+            )
+            return total + distance
+          }, 0) / Math.max(1, assigned.length)
+
+        return {
+          center,
+          count: assigned.length,
+          variance: Math.sqrt(variance),
+        }
+      }),
+    [centers, samples],
+  )
+
+  useEffect(() => {
+    let frame
+    const animate = () => {
+      setRotation((value) => value + 0.006)
+      frame = requestAnimationFrame(animate)
+    }
+
+    frame = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    drawRgbScene(canvas, samples, centers, rotation)
+  }, [samples, centers, rotation])
+
+  return (
+    <div className="rgb-page">
+      <header className="rgb-hero">
+        <button className="back-button" onClick={onBack} aria-label="Go back to main article">
+          <span>← Back to Article</span>
+        </button>
+        <p className="subpage-kicker">02 / Image Segmentation</p>
+        <h1>RGB Color Space Distribution</h1>
+        <p>
+          Explore how EM views image segmentation: every pixel becomes a point
+          in red, green, and blue space, then mixture components explain dense
+          color regions.
+        </p>
+      </header>
+
+      <section className="rgb-workbench" aria-label="RGB color space visualizer">
+        <div className="rgb-stage">
+          <div className="rgb-toolbar">
+            <label>
+              Preset
+              <select value={preset} onChange={(event) => setPreset(event.target.value)}>
+                {Object.entries(rgbPresets).map(([key, value]) => (
+                  <option key={key} value={key}>
+                    {value.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Components
+              <input
+                type="range"
+                min="2"
+                max="4"
+                value={components}
+                onChange={(event) => setComponents(Number(event.target.value))}
+              />
+              <strong>{components}</strong>
+            </label>
+            <label>
+              Color spread
+              <input
+                type="range"
+                min="18"
+                max="82"
+                value={spread}
+                onChange={(event) => setSpread(Number(event.target.value))}
+              />
+              <strong>{spread}</strong>
+            </label>
+          </div>
+          <canvas
+            ref={canvasRef}
+            className="em3d-canvas"
+            aria-label="Rotating 3D RGB color cloud"
+          />
+        </div>
+
+        <aside className="rgb-inspector" aria-label="Mixture component summary">
+          <div className="rgb-metric">
+            <span>Pixels sampled</span>
+            <strong>{samples.length}</strong>
+          </div>
+          <div className="rgb-metric">
+            <span>Mixture components</span>
+            <strong>{components}</strong>
+          </div>
+          <div className="rgb-component-list">
+            <h2>Estimated means</h2>
+            {clusterStats.map((stat, index) => (
+              <article key={rgbClusterColors[index]} className="rgb-component">
+                <i style={{ background: rgbClusterColors[index] }} />
+                <div>
+                  <strong>μ{index + 1}</strong>
+                  <code>RGB({stat.center.join(', ')})</code>
+                </div>
+                <span>{stat.variance.toFixed(1)} σ</span>
+              </article>
+            ))}
+          </div>
+        </aside>
+      </section>
+
+      <section className="rgb-learning-boxes" aria-label="RGB segmentation notes">
+        <article>
+          <p>Box 1</p>
+          <h2>Pixel likelihood</h2>
+          <span>
+            Each colored dot is scored against every Gaussian component. The
+            closest dense region receives the highest responsibility.
+          </span>
+        </article>
+        <article>
+          <p>Box 2</p>
+          <h2>Soft masks</h2>
+          <span>
+            Responsibilities become segmentation masks, so uncertain boundary
+            pixels can be shared instead of forced into a single hard label.
+          </span>
+        </article>
+        <article>
+          <p>Box 3</p>
+          <h2>Mean updates</h2>
+          <span>
+            The M-step moves component means toward weighted RGB averages and
+            adjusts spread around each color family.
+          </span>
+        </article>
+      </section>
+    </div>
+  )
+}
+
 function SubPage({ type, onBack }) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
@@ -947,6 +1272,10 @@ function SubPage({ type, onBack }) {
 
   if (type === 'kmeans') {
     return <KMeansPlayground onBack={onBack} />
+  }
+
+  if (type === 'rgb') {
+    return <RgbPlayground onBack={onBack} />
   }
 
   const pageDetails = {
