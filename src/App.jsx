@@ -2347,7 +2347,7 @@ function PresentationPlayground({ onBack }) {
           {currentSlide !== 2 && (
             <h2 className="slide-title">{slides[currentSlide].title}</h2>
           )}
-          {currentSlide !== 2 && slides[currentSlide].subtitle && (
+          {currentSlide !== 2 && currentSlide !== 4 && slides[currentSlide].subtitle && (
             <h3 className="slide-subtitle">{slides[currentSlide].subtitle}</h3>
           )}
 
@@ -2454,7 +2454,7 @@ function PresentationPlayground({ onBack }) {
             </div>
           )}
 
-          {currentSlide === 5 && (
+          {(currentSlide === 4 || currentSlide === 5) && (
             <button
               className="presentation-btn slide-action-btn"
               onClick={() => {
