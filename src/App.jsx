@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
+import EmAlgoPlayground from './EmAlgoPlayground'
 
 const articleSections = [
   {
@@ -2154,13 +2155,6 @@ function App() {
               </div>
             </div>
 
-            <div className="supplemental-section" id="maths-behind-em">
-              <h2 className="section-heading">Maths Behind the EM</h2>
-              <div className="placeholder-card">
-                <p>Detailed mathematical formulation, Jensen's Inequality proof, and coordinate ascent derivation will be added here.</p>
-              </div>
-            </div>
-
             <div className="supplemental-section" id="report">
               <h2 className="section-heading">Report & Empirical Studies</h2>
               <ReportSection />
@@ -2242,24 +2236,7 @@ function App() {
   )
 }
 
-function EmAlgoPlayground({ onBack }) {
-  return (
-    <div className="em-playground-container">
-      <header className="em-playground-header">
-        <button className="back-button" onClick={onBack} aria-label="Go back to main article">
-          <span>← Back to Article</span>
-        </button>
-      </header>
-      <div className="em-iframe-wrapper">
-        <iframe
-          title="EM Algorithm Explainer"
-          src="/em_algo.html"
-          className="em-explainer-iframe"
-        />
-      </div>
-    </div>
-  )
-}
+// Native React EmAlgoPlayground imported from './EmAlgoPlayground'
 
 function PresentationPlayground({ onBack }) {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -2272,7 +2249,7 @@ function PresentationPlayground({ onBack }) {
     },
     {
       title: "Mathematical Background",
-      subtitle: "Objective Functions & Log-Likelihood Intractability",
+      subtitle: "",
       kicker: "02 / Mathematical Background",
     },
     {
@@ -2282,7 +2259,7 @@ function PresentationPlayground({ onBack }) {
     },
     {
       title: "Expectation–Maximization Algorithm",
-      subtitle: "Alternating Coordinate Ascent Steps",
+      subtitle: "",
       kicker: "04 / Expectation–Maximization Algorithm",
     },
     {
@@ -2330,7 +2307,7 @@ function PresentationPlayground({ onBack }) {
   const progressPercent = ((currentSlide + 1) / slides.length) * 100
 
   return (
-    <div className="em-playground-container presentation-page">
+    <div className="em-presentation-container presentation-page">
       <header className="em-playground-header">
         <button className="back-button" onClick={onBack} aria-label="Go back to main article">
           <span>← Back to Article</span>
@@ -2347,9 +2324,206 @@ function PresentationPlayground({ onBack }) {
           {currentSlide !== 2 && (
             <h2 className="slide-title">{slides[currentSlide].title}</h2>
           )}
-          {currentSlide !== 2 && currentSlide !== 4 && slides[currentSlide].subtitle && (
+          {currentSlide !== 1 && currentSlide !== 2 && currentSlide !== 3 && currentSlide !== 4 && currentSlide !== 6 && slides[currentSlide].subtitle && (
             <h3 className="slide-subtitle">{slides[currentSlide].subtitle}</h3>
           )}
+
+          {currentSlide === 0 && (
+            <div className="slide-body" style={{
+              maxWidth: '780px',
+              marginTop: '30px',
+              lineHeight: '1.75',
+              fontSize: '1.02rem',
+              color: '#39434d',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              textAlign: 'center',
+              fontFamily: 'var(--serif)',
+              fontStyle: 'italic'
+            }}>
+              <p style={{ margin: 0 }}>
+                "How does Netflix know what to recommend you at 11pm on a Friday night? How does Spotify build your Discover Weekly? How does Gmail know which emails are spam before you even open them?
+              </p>
+              <p style={{ margin: 0 }}>
+                All of these systems share one thing in common — they are working with incomplete information. They can see what you do, but they cannot see why you do it.
+              </p>
+              <p style={{ margin: 0 }}>
+                The algorithm that solves this problem — that learns from incomplete and hidden data — is called the Expectation Maximization algorithm. And that is what our project is about."
+              </p>
+            </div>
+          )}
+
+          {currentSlide === 1 && (
+            <div className="slide-scroll-body" style={{
+              width: '100%',
+              maxHeight: '430px',
+              overflowY: 'auto',
+              textAlign: 'left',
+              padding: '0 32px 30px 32px',
+              marginTop: '10px',
+              fontFamily: 'var(--sans)',
+              fontSize: '0.94rem',
+              color: '#2c3033',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '28px'
+            }}>
+              {/* --- VARIABLE MAPPING --- */}
+              <div style={{ width: '100%' }}>
+                <p style={{
+                  margin: '0 0 16px 0',
+                  fontSize: '0.96rem',
+                  color: '#39434d',
+                  fontFamily: 'var(--serif)',
+                  fontStyle: 'italic'
+                }}>
+                  Mapping the abstract mathematical components of EM theory to concrete variables in a real-world recommendation system:
+                </p>
+                
+                <table style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '0.90rem',
+                  color: '#2c3033',
+                  background: 'rgba(24,54,83,0.02)',
+                  border: '1px solid #d7d4c9',
+                  borderRadius: '6px',
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 16px rgba(47,44,37,0.03)'
+                }}>
+                  <thead>
+                    <tr style={{ background: '#ede4d2', borderBottom: '2px solid #d7d4c9' }}>
+                      <th style={{ padding: '10px 14px', textAlign: 'left', fontFamily: 'var(--mono)', fontSize: '0.74rem', fontWeight: '800', color: '#183653', letterSpacing: '0.04em', textTransform: 'uppercase', width: '12%' }}>Symbol</th>
+                      <th style={{ padding: '10px 14px', textAlign: 'left', fontFamily: 'var(--mono)', fontSize: '0.74rem', fontWeight: '800', color: '#183653', letterSpacing: '0.04em', textTransform: 'uppercase', width: '30%' }}>In EM Theory</th>
+                      <th style={{ padding: '10px 14px', textAlign: 'left', fontFamily: 'var(--mono)', fontSize: '0.74rem', fontWeight: '800', color: '#183653', letterSpacing: '0.04em', textTransform: 'uppercase', width: '58%' }}>In Netflix</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style={{ borderBottom: '1px solid #d7d4c9' }}>
+                      <td style={{ padding: '12px 14px', fontFamily: 'var(--serif)', fontSize: '1.15rem', fontWeight: '700', color: '#183653', textAlign: 'left' }}>X</td>
+                      <td style={{ padding: '12px 14px', fontWeight: '600', color: '#121212', textAlign: 'left' }}>Observed Data</td>
+                      <td style={{ padding: '12px 14px', color: '#596168', textAlign: 'left' }}>Movies watched, ratings, time spent watching</td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #d7d4c9' }}>
+                      <td style={{ padding: '12px 14px', fontFamily: 'var(--serif)', fontSize: '1.15rem', fontWeight: '700', color: '#183653', textAlign: 'left' }}>Z</td>
+                      <td style={{ padding: '12px 14px', fontWeight: '600', color: '#121212', textAlign: 'left' }}>Hidden Variable</td>
+                      <td style={{ padding: '12px 14px', color: '#596168', textAlign: 'left' }}>User's taste profile — "loves thrillers", "prefers comedy"</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '12px 14px', fontFamily: 'var(--serif)', fontSize: '1.15rem', fontWeight: '700', color: '#183653', textAlign: 'left' }}>θ</td>
+                      <td style={{ padding: '12px 14px', fontWeight: '600', color: '#121212', textAlign: 'left' }}>Model Parameters</td>
+                      <td style={{ padding: '12px 14px', color: '#596168', textAlign: 'left' }}>Numbers defining each taste group — average watch patterns, genre weights</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <hr style={{ border: 'none', borderTop: '1px solid #d7d4c9', margin: '8px 0' }} />
+
+              {/* --- POSTERIOR PROBABILITY & LOG TRICK --- */}
+              <div style={{ width: '100%' }}>
+                <h4 style={{
+                  color: '#183653',
+                  fontFamily: 'var(--serif)',
+                  fontSize: '1.35rem',
+                  fontWeight: '800',
+                  margin: '0 0 6px 0'
+                }}>
+                  Posterior Probability: P ( Z | X, θ )
+                </h4>
+                
+                <blockquote style={{
+                  fontStyle: 'italic',
+                  margin: '0 0 16px 0',
+                  fontSize: '0.94rem',
+                  color: '#596168',
+                  padding: '8px 14px',
+                  borderLeft: '3px solid #183653',
+                  background: 'rgba(24, 54, 83, 0.04)'
+                }}>
+                  "Given what you watched, what is the probability of each taste group?"
+                </blockquote>
+
+                <h5 style={{
+                  margin: '0 0 10px 0',
+                  fontFamily: 'var(--mono)',
+                  fontSize: '0.74rem',
+                  color: '#183653',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  fontWeight: 'bold'
+                }}>
+                  Numerical Stability: Without Log vs. With Log
+                </h5>
+
+                <table style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '0.88rem',
+                  color: '#2c3033',
+                  background: 'rgba(24,54,83,0.01)',
+                  border: '1px solid #d7d4c9',
+                  borderRadius: '4px',
+                  overflow: 'hidden'
+                }}>
+                  <thead>
+                    <tr style={{ background: '#ede4d2', borderBottom: '1px solid #d7d4c9' }}>
+                      <th style={{ padding: '10px 14px', textAlign: 'left', fontFamily: 'var(--mono)', fontSize: '0.72rem', color: '#183653', textTransform: 'uppercase', width: '50%' }}>Without Log (Multiplication)</th>
+                      <th style={{ padding: '10px 14px', textAlign: 'left', fontFamily: 'var(--mono)', fontSize: '0.72rem', color: '#183653', textTransform: 'uppercase', width: '50%' }}>With Log (Summation)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style={{ borderBottom: '1px solid #d7d4c9' }}>
+                      <td style={{ padding: '12px 14px', fontFamily: 'var(--mono)', fontSize: '0.80rem', textAlign: 'left' }}>0.72 × 0.68 × 0.81 × 0.74</td>
+                      <td style={{ padding: '12px 14px', fontFamily: 'var(--mono)', fontSize: '0.80rem', textAlign: 'left' }}>log(0.72) + log(0.68) + log(0.81) + log(0.74)</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '12px 14px', textAlign: 'left', color: '#dc2626', fontWeight: 'bold' }}>
+                        = 0.000000001 ❌ (Numerical Underflow)
+                      </td>
+                      <td style={{ padding: '12px 14px', textAlign: 'left', color: '#16a34a', fontWeight: 'bold' }}>
+                        = manageable number ✅ (Floating Stability)
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <hr style={{ border: 'none', borderTop: '1px solid #d7d4c9', margin: '8px 0' }} />
+
+              {/* --- JENSEN'S ELBO --- */}
+              <div style={{ width: '100%' }}>
+                <h4 style={{
+                  color: '#183653',
+                  fontFamily: 'var(--serif)',
+                  fontSize: '1.35rem',
+                  fontWeight: '800',
+                  margin: '0 0 10px 0'
+                }}>
+                  Evidence Lower Bound (ELBO): E [ log f(X) ] ≤ log ( E [ f(X) ] )
+                </h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.90rem', lineHeight: '1.6' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: '#dc2626', fontSize: '1.1rem', fontWeight: 'bold' }}>&darr;</span>
+                    <span><strong>EM does not solve the hard problem directly.</strong> Direct maximum likelihood estimation of incomplete observed datasets contains sum operations coupled inside the log function, which is mathematically intractable.</span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: '#4f8ef7', fontSize: '1.1rem', fontWeight: 'bold' }}>&darr;</span>
+                    <span><strong>It builds an easier version and solves that.</strong> Using Jensen's Inequality, EM constructs a tight concave surrogate lower bound (the ELBO) at the current parameter estimates.</span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: '#16a34a', fontSize: '1.1rem', fontWeight: 'bold' }}>&darr;</span>
+                    <span><strong>Each step is guaranteed to improve.</strong> In a coordinate ascent staircase style, each Expectation and Maximization step provably updates the surrogate, lifting the actual log-likelihood monotonically.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
 
           {currentSlide === 2 && (
             <div className="slide-scroll-body" style={{
@@ -2454,7 +2628,261 @@ function PresentationPlayground({ onBack }) {
             </div>
           )}
 
-          {(currentSlide === 4 || currentSlide === 5) && (
+          {currentSlide === 6 && (
+            <div className="slide-scroll-body" style={{
+              width: '100%',
+              maxHeight: '430px',
+              overflowY: 'auto',
+              textAlign: 'left',
+              padding: '0 32px 30px 32px',
+              marginTop: '10px',
+              fontFamily: 'var(--sans)',
+              fontSize: '0.94rem',
+              color: '#2c3033',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '40px'
+            }}>
+              {/* --- LIMITATIONS CHAPTER --- */}
+              <div style={{ width: '100%' }}>
+                <h3 style={{
+                  fontFamily: 'var(--serif)',
+                  fontSize: '1.75rem',
+                  fontWeight: '800',
+                  color: '#183653',
+                  borderBottom: '1px solid #d7d4c9',
+                  paddingBottom: '10px',
+                  marginBottom: '20px',
+                  letterSpacing: '0.01em'
+                }}>Limitations</h3>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                  gap: '28px',
+                  alignItems: 'start'
+                }}>
+                  {/* Left Column: Bullet points */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ background: 'rgba(24, 54, 83, 0.03)', padding: '14px 18px', borderLeft: '3px solid #dc2626', borderRadius: '4px' }}>
+                      <strong style={{ color: '#121212', fontSize: '1rem', display: 'block', marginBottom: '4px' }}>• Convergence to Local Maxima</strong>
+                      <span>Because the observed data log-likelihood is non-convex, EM is mathematically guaranteed to find a local peak, but not necessarily the global optimum. It acts like climbing a coordinate hill in a foggy mountain range where the starting position dictates the final summit.</span>
+                    </div>
+
+                    <div style={{ background: 'rgba(24, 54, 83, 0.03)', padding: '14px 18px', borderLeft: '3px solid #ea580c', borderRadius: '4px' }}>
+                      <strong style={{ color: '#121212', fontSize: '1rem', display: 'block', marginBottom: '4px' }}>• Sensitivity to Initialization</strong>
+                      <span>Starting parameters dictate the final cluster borders. Smart heuristics, such as running a rapid K-Means clustering run first to localize candidate cluster means, are essential to find global maxima.</span>
+                    </div>
+
+                    <div style={{ background: 'rgba(24, 54, 83, 0.03)', padding: '14px 18px', borderLeft: '3px solid #ca8a04', borderRadius: '4px' }}>
+                      <strong style={{ color: '#121212', fontSize: '1rem', display: 'block', marginBottom: '4px' }}>• Slow Convergence</strong>
+                      <span>Near optimal parameters, the changes in likelihood shrink exponentially, requiring many iterations in flat regions of the probability surface before stopping.</span>
+                    </div>
+
+                    <div style={{ background: 'rgba(24, 54, 83, 0.03)', padding: '14px 18px', borderLeft: '3px solid #4f46e5', borderRadius: '4px' }}>
+                      <strong style={{ color: '#121212', fontSize: '1rem', display: 'block', marginBottom: '4px' }}>• Computational Complexity</strong>
+                      <span>Calculating high-dimensional latent variables and matrix covariance updates on millions of records requires high CPU/GPU compute power.</span>
+                    </div>
+
+                    <div style={{ background: 'rgba(24, 54, 83, 0.03)', padding: '14px 18px', borderLeft: '3px solid #737373', borderRadius: '4px' }}>
+                      <strong style={{ color: '#121212', fontSize: '1rem', display: 'block', marginBottom: '4px' }}>• Singular Covariance Matrix</strong>
+                      <span>If one Gaussian component gets assigned too few points, its variance collapses to zero, causing numerical singularities and overflow errors.</span>
+                    </div>
+                  </div>
+
+                  {/* Right Column: High-Fidelity Diagrams */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {/* Diagram 1: Foggy Mountain Climb */}
+                    <div style={{ background: '#fbf7ee', border: '1px solid #d7d4c9', borderRadius: '6px', padding: '16px', boxShadow: '0 4px 16px rgba(47,44,37,0.04)' }}>
+                      <h4 style={{ margin: '0 0 12px 0', fontFamily: 'var(--mono)', fontSize: '0.78rem', color: '#183653', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                        The Foggy Mountain Climb — EM Maxima Traps
+                      </h4>
+                      <svg viewBox="0 0 400 210" style={{ width: '100%', height: 'auto', background: 'transparent' }}>
+                        {/* Shaded Mountain Silhouette */}
+                        <path d="M 10 210 Q 50 150 90 120 Q 140 80 190 160 Q 240 200 290 100 Q 340 50 390 30 L 390 210 Z" fill="#ede4d2" stroke="#d7d4c9" strokeWidth="1.5" />
+                        
+                        {/* Peaks */}
+                        <circle cx="90" cy="120" r="4" fill="#dc2626" />
+                        <text x="90" y="105" textAnchor="middle" fill="#dc2626" style={{ fontSize: '9px', fontFamily: 'var(--mono)', fontWeight: 'bold' }}>LOCAL PEAK</text>
+                        
+                        <circle cx="390" cy="30" r="4" fill="#16a34a" />
+                        <text x="365" y="25" textAnchor="middle" fill="#16a34a" style={{ fontSize: '9px', fontFamily: 'var(--mono)', fontWeight: 'bold' }}>GLOBAL PEAK</text>
+
+                        {/* Climb Path 1 (Local trap) */}
+                        <path d="M 30 190 Q 50 160 70 145 T 90 120" fill="none" stroke="#dc2626" strokeWidth="2" strokeDasharray="3,3" />
+                        <text x="35" y="150" fill="#dc2626" style={{ fontSize: '8px', fontFamily: 'var(--sans)', fontWeight: 'bold' }}>EM Path 1 (Local Trap)</text>
+
+                        {/* Climb Path 2 (Global path) */}
+                        <path d="M 190 160 Q 230 170 270 120 T 350 50 T 390 30" fill="none" stroke="#16a34a" strokeWidth="2" />
+                        <text x="260" y="155" fill="#16a34a" style={{ fontSize: '8px', fontFamily: 'var(--sans)', fontWeight: 'bold' }}>EM Path 2 (Better Start)</text>
+                        
+                        <text x="200" y="200" textAnchor="middle" fill="#7a7870" style={{ fontSize: '9px', fontStyle: 'italic', fontFamily: 'var(--serif)' }}>
+                          "Starting position dictates final summit convergence"
+                        </text>
+                      </svg>
+                    </div>
+
+                    {/* Diagram 2: Slow Convergence Curve */}
+                    <div style={{ background: '#fbf7ee', border: '1px solid #d7d4c9', borderRadius: '6px', padding: '16px', boxShadow: '0 4px 16px rgba(47,44,37,0.04)' }}>
+                      <h4 style={{ margin: '0 0 12px 0', fontFamily: 'var(--mono)', fontSize: '0.78rem', color: '#183653', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                        EM Log-Likelihood Rate of Ascent
+                      </h4>
+                      <svg viewBox="0 0 400 180" style={{ width: '100%', height: 'auto', background: 'transparent' }}>
+                        {/* Axes */}
+                        <line x1="40" y1="150" x2="380" y2="150" stroke="#a09b8c" strokeWidth="1" />
+                        <line x1="40" y1="20" x2="40" y2="150" stroke="#a09b8c" strokeWidth="1" />
+                        
+                        {/* Labels */}
+                        <text x="210" y="170" textAnchor="middle" fill="#596168" style={{ fontSize: '9px', fontFamily: 'var(--mono)' }}>Iteration Count (t)</text>
+                        <text x="15" y="90" textAnchor="middle" fill="#596168" transform="rotate(-90 15 90)" style={{ fontSize: '9px', fontFamily: 'var(--mono)' }}>Objective Value</text>
+
+                        {/* Rapid curve flattening */}
+                        <path d="M 40 140 Q 60 40 180 32 L 370 30" fill="none" stroke="#183653" strokeWidth="2.5" />
+                        <line x1="40" y1="30" x2="380" y2="30" stroke="#9c7d2d" strokeWidth="0.8" strokeDasharray="3,3" />
+                        <text x="340" y="25" fill="#9c7d2d" style={{ fontSize: '8px', fontFamily: 'var(--mono)' }}>Optimum</text>
+
+                        {/* Annotations */}
+                        <text x="80" y="80" fill="#183653" style={{ fontSize: '8px', fontWeight: 'bold' }}>1. Rapid Early Gains</text>
+                        <text x="220" y="55" fill="#596168" style={{ fontSize: '8px' }}>2. Extremely Small Steps near Peak</text>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* --- APPLICATIONS CHAPTER --- */}
+              <div style={{ width: '100%' }}>
+                <h3 style={{
+                  fontFamily: 'var(--serif)',
+                  fontSize: '1.75rem',
+                  fontWeight: '800',
+                  color: '#183653',
+                  borderBottom: '1px solid #d7d4c9',
+                  paddingBottom: '10px',
+                  marginBottom: '20px',
+                  letterSpacing: '0.01em'
+                }}>Real-World Applications</h3>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                  gap: '24px',
+                  width: '100%'
+                }}>
+                  {/* Card 1: GMM Clustering */}
+                  <div style={{ background: '#fbf7ee', border: '1px solid #d7d4c9', borderRadius: '6px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <h4 style={{ margin: 0, fontFamily: 'var(--serif)', fontSize: '1.25rem', color: '#121212', fontWeight: '700' }}>• Clustering & Data Analysis</h4>
+                    <p style={{ margin: 0, fontSize: '0.86rem', color: '#596168', lineHeight: '1.5' }}>GMM captures overlapping anisotropic clusters with soft borders, calculating fractional membership weights rather than hard dividers.</p>
+                    <svg viewBox="0 0 200 120" style={{ width: '100%', height: 'auto', background: 'rgba(24,54,83,0.02)', border: '1px dashed #d7d4c9', borderRadius: '4px' }}>
+                      {/* Scatter points */}
+                      <circle cx="50" cy="40" r="3" fill="rgba(79, 142, 247, 0.7)" />
+                      <circle cx="65" cy="50" r="3" fill="rgba(79, 142, 247, 0.7)" />
+                      <circle cx="45" cy="65" r="3" fill="rgba(79, 142, 247, 0.7)" />
+                      <circle cx="55" cy="55" r="3" fill="rgba(79, 142, 247, 0.7)" />
+                      
+                      <circle cx="140" cy="70" r="3" fill="rgba(45, 212, 160, 0.7)" />
+                      <circle cx="150" cy="85" r="3" fill="rgba(45, 212, 160, 0.7)" />
+                      <circle cx="130" cy="80" r="3" fill="rgba(45, 212, 160, 0.7)" />
+                      <circle cx="145" cy="75" r="3" fill="rgba(45, 212, 160, 0.7)" />
+
+                      <circle cx="100" cy="60" r="3" fill="rgba(201, 125, 247, 0.7)" />
+                      
+                      {/* Ellipses */}
+                      <ellipse cx="55" cy="52" rx="30" ry="20" fill="none" stroke="#4f8ef7" strokeWidth="1" strokeDasharray="2,2" transform="rotate(-15 55 52)" />
+                      <ellipse cx="140" cy="78" rx="25" ry="18" fill="none" stroke="#2dd4a0" strokeWidth="1" strokeDasharray="2,2" transform="rotate(10 140 78)" />
+                    </svg>
+                  </div>
+
+                  {/* Card 2: Speech Recognition */}
+                  <div style={{ background: '#fbf7ee', border: '1px solid #d7d4c9', borderRadius: '6px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <h4 style={{ margin: 0, fontFamily: 'var(--serif)', fontSize: '1.25rem', color: '#121212', fontWeight: '700' }}>• Speech Recognition</h4>
+                    <p style={{ margin: 0, fontSize: '0.86rem', color: '#596168', lineHeight: '1.5' }}>Translates acoustic waveforms into sound segments (phonemes) and parses their underlying sequences via hidden HMM states.</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.75rem', fontFamily: 'var(--mono)', background: 'rgba(24,54,83,0.02)', padding: '10px', borderRadius: '4px', border: '1px dashed #d7d4c9' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#4f8ef7' }}>[Audio Input]</span> &rarr; Digital format</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#2dd4a0' }}>[Acoustics]</span> &rarr; Phone segmenting</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#ea580c' }}>[HMM Decoder]</span> &rarr; Lexicon match</div>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Recommendation Systems */}
+                  <div style={{ background: '#fbf7ee', border: '1px solid #d7d4c9', borderRadius: '6px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <h4 style={{ margin: 0, fontFamily: 'var(--serif)', fontSize: '1.25rem', color: '#121212', fontWeight: '700' }}>• Recommendation Systems</h4>
+                    <p style={{ margin: 0, fontSize: '0.86rem', color: '#596168', lineHeight: '1.5' }}>Learns implicit user preference profiles (Netflix genres, Spotify tracks) by formulating them as latent interest states.</p>
+                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', alignItems: 'center', height: '60px', background: 'rgba(24,54,83,0.02)', border: '1px dashed #d7d4c9', borderRadius: '4px', padding: '6px' }}>
+                      <div style={{ padding: '4px 6px', background: '#ede4d2', border: '1px solid #c3bda9', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>User Ratings</div>
+                      <span style={{ fontSize: '10px' }}>&rarr;</span>
+                      <div style={{ padding: '4px 6px', background: '#4f8ef7', color: '#fff', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>Latent Profile</div>
+                      <span style={{ fontSize: '10px' }}>&rarr;</span>
+                      <div style={{ padding: '4px 6px', background: '#2dd4a0', fontSize: '9px', fontWeight: 'bold', borderRadius: '3px' }}>Feed Item</div>
+                    </div>
+                  </div>
+
+                  {/* Card 4: Image Segmentation */}
+                  <div style={{ background: '#fbf7ee', border: '1px solid #d7d4c9', borderRadius: '6px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <h4 style={{ margin: 0, fontFamily: 'var(--serif)', fontSize: '1.25rem', color: '#121212', fontWeight: '700' }}>• Image Segmentation</h4>
+                    <p style={{ margin: 0, fontSize: '0.86rem', color: '#596168', lineHeight: '1.5' }}>Segments image areas by modeling each pixel's color distribution as observations generated from a mixture of regions.</p>
+                    <svg viewBox="0 0 200 80" style={{ width: '100%', height: 'auto', background: 'rgba(24,54,83,0.02)', border: '1px dashed #d7d4c9', borderRadius: '4px' }}>
+                      {/* Bounding box mockups */}
+                      <rect x="20" y="15" width="60" height="55" fill="none" stroke="#e11d48" strokeWidth="1" />
+                      <text x="24" y="26" fill="#e11d48" style={{ fontSize: '8px', fontFamily: 'var(--mono)', fontWeight: 'bold' }}>Cat: 94%</text>
+                      
+                      <rect x="110" y="20" width="70" height="45" fill="none" stroke="#2563eb" strokeWidth="1" />
+                      <text x="114" y="31" fill="#2563eb" style={{ fontSize: '8px', fontFamily: 'var(--mono)', fontWeight: 'bold' }}>Duck: 89%</text>
+
+                      {/* Translucent masks */}
+                      <path d="M 25 65 Q 40 25 70 30 Q 80 50 65 68 Z" fill="rgba(225, 29, 72, 0.2)" />
+                      <path d="M 115 55 Q 140 25 170 40 Q 175 60 145 62 Z" fill="rgba(37, 99, 235, 0.2)" />
+                    </svg>
+                  </div>
+
+                  {/* Card 5: Medical Applications */}
+                  <div style={{ background: '#fbf7ee', border: '1px solid #d7d4c9', borderRadius: '6px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <h4 style={{ margin: 0, fontFamily: 'var(--serif)', fontSize: '1.25rem', color: '#121212', fontWeight: '700' }}>• Medical & Biological Applications</h4>
+                    <p style={{ margin: 0, fontSize: '0.88rem', color: '#2c3033', lineHeight: '1.6' }}>Doctors and geneticists can identify disease and DNA sequence patterns even when physical data is partially incomplete or unobserved.</p>
+                  </div>
+
+                  {/* Card 6: NLP */}
+                  <div style={{ background: '#fbf7ee', border: '1px solid #d7d4c9', borderRadius: '6px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <h4 style={{ margin: 0, fontFamily: 'var(--serif)', fontSize: '1.25rem', color: '#121212', fontWeight: '700' }}>• Natural Language Processing (NLP)</h4>
+                    <p style={{ margin: 0, fontSize: '0.88rem', color: '#2c3033', lineHeight: '1.6' }}>EM helps computers discover latent topics, cluster documents, and parse syntax trees in large text corpora automatically.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentSlide === 7 && (
+            <div className="slide-body" style={{
+              maxWidth: '820px',
+              marginTop: '40px',
+              fontFamily: 'var(--sans)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '24px',
+              alignItems: 'center',
+              textAlign: 'center'
+            }}>
+              <blockquote style={{
+                margin: '0 auto',
+                maxWidth: '740px',
+                padding: '24px 32px',
+                borderLeft: 'none',
+                borderTop: '2.5px solid #183653',
+                borderBottom: '2.5px solid #183653',
+                fontSize: '1.24rem',
+                fontFamily: 'var(--serif)',
+                fontStyle: 'italic',
+                color: '#183653',
+                lineHeight: '1.68',
+                boxShadow: '0 4px 18px rgba(24,54,83,0.02)'
+              }}>
+                "The Expectation-Maximization algorithm is one of the most important techniques for parameter estimation in models containing hidden or incomplete data."
+              </blockquote>
+            </div>
+          )}
+
+
+          {(currentSlide === 3 || currentSlide === 4 || currentSlide === 5) && (
             <button
               className="presentation-btn slide-action-btn"
               onClick={() => {

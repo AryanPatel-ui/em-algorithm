@@ -2440,7 +2440,7 @@ blockquote {
    EM Algo Interactive Explainer Styles
    ========================================================================== */
 
-.em-playground-container {
+.em-presentation-container {
   width: 100%;
   min-height: 100svh;
   display: flex;
